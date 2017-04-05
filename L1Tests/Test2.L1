@@ -1,0 +1,58 @@
+(:main
+    (:main
+        0 0
+        (rdi <- 21)
+        (rsi <- 0)
+        (call allocate 2)
+        ((mem rax 8) <- 1)
+        ((mem rax 16) <- 3)
+        ((mem rax 24) <- 5)
+        ((mem rax 32) <- 7)
+        ((mem rax 40) <- 9)
+        ((mem rax 48) <- 2)
+        ((mem rax 56) <- 4)
+        ((mem rax 64) <- 6)
+        ((mem rax 72) <- 8)
+        ((mem rax 80) <- 10)
+        ((mem rsp -8) <- :f_ret)
+        (rdi <- rax)
+        (call :sort 1)
+        :f_ret
+        (return)
+    )
+    (:sort
+        1 0
+        (rax <- rdi)
+        (rdi <- (mem rdi 0))
+        (rdi >>= 1)
+        (rcx <- 1)
+        :loop_start
+        (rsi @ rax rcx 8)
+        (rdx <- rcx)
+        :inner_loop_start
+        (r10 @ rax rdx 8)
+        (r8 <- (mem rsi 0))
+        (r9 <- (mem r10 8))
+        (cjump r8 <= r9 :nothing :mem_swap)
+        :mem_swap
+        ((mem rsi 0) <- r9)
+        ((mem r10 8) <- r8)
+        :nothing
+        (rdx++)
+        (cjump rdx < rdi :inner_loop_start :inner_loop_end)
+        :inner_loop_end
+        (rcx++)
+        (cjump rcx < rdi :loop_start :loop_end)
+        :loop_end
+        (return)
+    )
+)
+
+
+; Bubble Sort
+; the example input here is
+; 1, 3, 5, 7, 9, 2, 4, 6, 8, 10
+; the sorted result will be
+; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+
+

@@ -1,0 +1,75 @@
+(:main
+    (:main
+        0 0
+        (rdi <- 21)
+        (rsi <- 0)
+        (call allocate 2)
+        ((mem rax 8) <- 1)
+        ((mem rax 16) <- 3)
+        ((mem rax 24) <- 5)
+        ((mem rax 32) <- 7)
+        ((mem rax 40) <- 9)
+        ((mem rax 48) <- 2)
+        ((mem rax 56) <- 4)
+        ((mem rax 64) <- 6)
+        ((mem rax 72) <- 8)
+        ((mem rax 80) <- 10)
+        (r12 <- rax)
+        ((mem rsp -8) <- :sum_f_ret)
+        (rdi <- r12)
+        (call :sum 1)
+        (call print 1)
+        :sum_f_ret
+        ((mem rsp -8) <- :product_f_ret)
+        (rdi <- r12)
+        (call :product)
+        (call print 1)
+        :product_f_ret
+        (return)
+    )
+    (:sum
+        1 0
+        (rax <- 0)
+        (rsi <- rdi)
+        (rdi <- (mem rdi 0))
+        (rdi >>= 1)
+        (rcx <- 1)
+        :loop_start
+        (rdx @ rsi rcx 8)
+        (rdx <- (mem rdx 0))
+        (rax += rdx)
+        (rcx++)
+        (cjump rcx <= rdi :loop_start :loop_end)
+        :loop_end
+        (rax <<= 1)
+        (rax++)
+        (return)
+    )
+    (:product
+        1 0
+        (rax <- 0)
+        (rsi <- rdi)
+        (rdi <- (mem rdi 0))
+        (rdi >>= 1)
+        (rcx <- 1)
+        :loop_start
+        (rdx @ rsi rcx 8)
+        (rdx <- (mem rdx 0))
+        (rax *= rdx)
+        (rcx++)
+        (cjump rcx <= rdi :loop_start :loop_end)
+        :loop_end
+        (rax <<= 1)
+        (rax++)
+        (return)
+    )
+)
+
+
+; sum and product
+; the example input here is
+; 1, 3, 5, 7, 9, 2, 4, 6, 8, 10
+; the sorted result will be
+; sum: 55, product: 3628800
+
+

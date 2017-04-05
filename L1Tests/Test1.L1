@@ -1,0 +1,39 @@
+(:main
+    (:main
+        0 0
+        (rdi <- 123)
+        (rsi <- 321)
+        (rdx <- 10)
+        ((mem rsp -8) <- :f_ret)
+        (call :sum 3)
+        :f_ret
+        (call print 1)
+        (return)
+    )
+    (:product_sum
+        3 0
+        (rcx <- 0)
+        (rax <- 0)
+        :loop_start
+        (r8 <- 1)
+        (r8 *= rdi)
+        (r8 *= rsi)
+        (rax += r8)
+        (rdi++)
+        (rsi++)
+        (rcx++)
+        (cjump rcx = rsi :loop_end :loop_start)
+        :loop_end
+        (rax <<= 1)
+        (rax++)
+        (return)
+    )
+)
+
+
+; a function that calculate product sum
+; input a, b, c
+; e.g. a = 1, b = 10, c = 5, then calculate
+; 1 * 10 + 2 * 11 + 3 * 13 + 4 * 14 + 5 * 15
+
+
