@@ -16,40 +16,36 @@
 
 using namespace std;
 
-int main(
-  int argc, 
-  char **argv
-  ){
-  bool verbose;
+int main(int argc, char **argv) {
+    bool verbose;
 
-  /* Check the input.
-   */
-  if( argc < 2 ) {
-    std::cerr << "Usage: " << argv[ 0 ] << " SOURCE [-v]" << std::endl;
-    return 1;
-  }
-  int32_t opt;
-  while ((opt = getopt(argc, argv, "v")) != -1) {
-    switch (opt){
-      case 'v':
-        verbose = true;
-        break ;
-
-      default:
-        std::cerr << "Usage: " << argv[ 0 ] << "[-v] SOURCE" << std::endl;
+    /* Check the input.
+     */
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " SOURCE [-v]" << std::endl;
         return 1;
     }
-  }
+    int32_t opt;
+    while ((opt = getopt(argc, argv, "v")) != -1) {
+        switch (opt) {
+            case 'v':
+                verbose = true;
+                break;
+            default:
+                std::cerr << "Usage: " << argv[0] << "[-v] SOURCE" << std::endl;
+                return 1;
+        }
+    }
 
-  /* Parse the L1 program.
-   */
-  L1::Program p = L1::L1_parse_file(argv[optind]);
+    /* Parse the L1 program.
+     */
+    L1::Program p = L1::L1_parse_file(argv[optind]);
 
-  /* Generate x86_64 code
-   */
-  for (auto f : p.functions){
-    cout << f->name << endl;
-  }
+    /* Generate x86_64 code
+     */
+    for (auto f : p.functions) {
+        cout << f->name << endl;
+    }
 
-  return 0;
+    return 0;
 }
