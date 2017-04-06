@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
     /* Generate x86_64 code
      */
     for (auto f : p.functions) {
-        cout << f->name << endl;
+        cout << f->name << " has " << f->arguments << " parameters and " << f->locals << " local variables" << endl;
     }
 
     return 0;

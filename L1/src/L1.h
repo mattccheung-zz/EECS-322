@@ -10,6 +10,8 @@ namespace L1 {
 
     struct Function {
         std::string name;
+        int64_t arguments;
+        int64_t locals;
     };
 
     struct Program {

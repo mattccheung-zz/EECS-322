@@ -35,7 +35,7 @@ namespace L1 {
             pegtl::star<
                 pegtl::sor<
                     pegtl::alpha,
-                    pegtl::one <'_'>,
+                    pegtl::one<'_'>,
                     pegtl::digit
                 >
             >
@@ -43,30 +43,71 @@ namespace L1 {
 
     struct function_name : label {};
 
-    struct seps : pegtl::star<pegtl::ascii::space> {};
+    struct number :
+        pegtl::seq<
+            pegtl::opt<
+                pegtl::sor<
+                    pegtl::one<'-'>,
+                    pegtl::one<'+'>
+                >
+            >,
+            pegtl::plus<
+                pegtl::digit
+            >
+        >{};
+
+    struct argument_number : number {};
+
+    struct local_number : number {};
+
+    struct comment :
+        pegtl::disable<
+            pegtl::one<';'>,
+            pegtl::until<pegtl::eolf>
+        > {};
+
+    struct seps :
+        pegtl::star<
+            pegtl::sor<
+                pegtl::ascii::space,
+                comment
+            >
+        > {};
 
     struct L1_label_rule : label {};
 
     struct L1_function_rule :
         pegtl::seq<
-            pegtl::one <'('>,
+            seps,
+            pegtl::one<'('>,
             function_name,
+            seps,
+            argument_number,
+            seps,
+            local_number,
             seps,
             pegtl::one<')'>,
             seps
         > {};
 
-    struct L1_functions_rule : pegtl::plus<L1_function_rule> {};
+    struct L1_functions_rule :
+        pegtl::seq<
+            seps,
+            pegtl::plus < L1_function_rule>
+        > {};
 
     struct entry_point_rule :
-            pegtl::seq<
-                pegtl::one <'('>,
-                label,
-                seps,
-                L1_functions_rule,
-                seps,
-                pegtl::one<')'>
-            > {};
+        pegtl::seq<
+            seps,
+            pegtl::one<'('>,
+            seps,
+            label,
+            seps,
+            L1_functions_rule,
+            seps,
+            pegtl::one<')'>,
+            seps
+        > {};
 
     struct grammar : pegtl::must<entry_point_rule> {};
 
@@ -107,6 +148,23 @@ namespace L1 {
             parsed_registers.push_back(i);
         }
     };
+
+    template<>
+    struct action<argument_number> {
+        static void apply(const pegtl::input &in, L1::Program &p) {
+            L1::Function *currentF = p.functions.back();
+            currentF->arguments = std::stoll(in.string());
+        }
+    };
+
+    template<>
+    struct action<local_number> {
+        static void apply(const pegtl::input &in, L1::Program &p) {
+            L1::Function *currentF = p.functions.back();
+            currentF->locals = std::stoll(in.string());
+        }
+    };
+
 
     Program L1_parse_file(char *fileName) {
 
