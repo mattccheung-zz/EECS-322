@@ -106,13 +106,7 @@ namespace L1 {
 
     struct operand_s : pegtl::sor<operand_t, label> {};
 
-    struct operand_E :
-        pegtl::sor<
-            pegtl::one<'0'>,
-            pegtl::one<'2'>,
-            pegtl::one<'4'>,
-            pegtl::one<'8'>
-        > {};
+    struct operand_E : pegtl::sor<pegtl::one<'0'>, pegtl::one<'2'>, pegtl::one<'4'>, pegtl::one<'8'>> {};
 
     struct operand_M : number {};
 
@@ -146,13 +140,7 @@ namespace L1 {
 
     struct operator_andq : pegtl::string<'&', '='> {};
 
-    struct operator_aop :
-        pegtl::sor<
-            operator_addq,
-            operator_subq,
-            operator_imulq,
-            operator_andq
-        > {};
+//    struct operator_aop : pegtl::sor<operator_addq, operator_subq, operator_imulq, operator_andq> {};
 
     struct operator_salq : pegtl::string<'<', '<', '='> {};
 
@@ -211,7 +199,7 @@ namespace L1 {
                             operator_inc, operator_dec,
                             pegtl::seq<
                                 operator_moveq, seps,
-                                pegtl::sor<inst_mem, pegtl::seq<t, seps, operator_cmp, seps, t>, s>
+                                pegtl::sor<pegtl::seq<t, seps, operator_cmp, seps, t>, s, inst_mem>
                             >,
                             pegtl::seq<operator_at, seps, w, seps, w, seps, E>,
                             pegtl::seq<operator_sop, seps, operand_sop>,
