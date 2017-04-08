@@ -43,8 +43,26 @@ int main(int argc, char **argv) {
 
     /* Generate x86_64 code
      */
+
+    const char* MAPS[] {
+            "EMPTY", "MOVEQ", "ADDQ", "SUBQ", "IMULQ", "ANDQ", "SALQ", "SARQ",
+            "CJUMP", "LABEL", "JMP", "RETURN", "CALL", "PRINT", "ALLOCATE",
+            "ARRAY_ERROR", "CISC", "MEM", "INC", "DEC", "LQ", "EQ", "LEQ"
+    };
+
     for (auto f : p.functions) {
         cout << f->name << " has " << f->arguments << " parameters and " << f->locals << " local variables" << endl;
+        for (auto i : f->instructions) {
+            cout << "types: " << i->operators.size() << endl;
+            for (auto t : i->operators) {
+                cout << "\t" << MAPS[t];
+            }
+            cout << endl << "operands: " << i->operands.size() << endl;
+            for (auto o : i->operands) {
+                cout << "\t" << o;
+            }
+            cout << endl;
+        }
     }
 
     return 0;
