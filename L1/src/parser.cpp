@@ -124,7 +124,7 @@ namespace L1 {
 
     struct M : operand_M {};
 
-    struct operator_moveq : pegtl::string<'<', '-'> {};
+    struct operator_movq : pegtl::string<'<', '-'> {};
 
     struct operator_inc : pegtl::string<'+', '+'> {};
 
@@ -198,7 +198,7 @@ namespace L1 {
                         pegtl::sor<
                             operator_inc, operator_dec,
                             pegtl::seq<
-                                operator_moveq, seps,
+                                operator_movq, seps,
                                 pegtl::sor<pegtl::seq<t, seps, operator_cmp, seps, t>, s, inst_mem>
                             >,
                             pegtl::seq<operator_at, seps, w, seps, w, seps, E>,
@@ -210,7 +210,7 @@ namespace L1 {
                     pegtl::seq<
                         inst_mem, seps,
                         pegtl::sor<
-                            pegtl::seq<operator_moveq, seps, s>,
+                            pegtl::seq<operator_movq, seps, s>,
                             pegtl::seq<pegtl::sor<operator_addq, operator_subq>, seps, t>
                         >
                     >,
@@ -398,9 +398,9 @@ namespace L1 {
     };
 
     template<>
-    struct action<operator_moveq> {
+    struct action<operator_movq> {
         static void apply(const pegtl::input &in, L1::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L1::Operator_Type::MOVEQ);
+            p.functions.back()->instructions.back()->operators.push_back(L1::Operator_Type::MOVQ);
         }
     };
 
@@ -512,7 +512,7 @@ namespace L1 {
     template<>
     struct action<inst_call> {
         static void apply(const pegtl::input &in, L1::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L1::Operator_Type::JMP);
+            p.functions.back()->instructions.back()->operators.push_back(L1::Operator_Type::CALL);
         }
     };
 

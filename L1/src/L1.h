@@ -5,7 +5,7 @@
 namespace L1 {
 
     enum Operator_Type {
-        EMPTY, MOVEQ, ADDQ, SUBQ, IMULQ, ANDQ, SALQ, SARQ,
+        EMPTY, MOVQ, ADDQ, SUBQ, IMULQ, ANDQ, SALQ, SARQ,
         CJUMP, LABEL, JMP, RETURN, CALL, PRINT, ALLOCATE,
         ARRAY_ERROR, CISC, MEM, INC, DEC, LQ, EQ, LEQ
     };
