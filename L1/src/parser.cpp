@@ -79,7 +79,7 @@ namespace L1 {
             pegtl::string<'r', 'd', 'i'>,
             pegtl::string<'r', 's', 'i'>,
             pegtl::string<'r', 'd', 'x'>,
-            pegtl::string<'r', 'x', 'i'>,
+            pegtl::string<'r', 'c', 'x'>,
             pegtl::string<'r', '8'>,
             pegtl::string<'r', '9'>
         > {};
@@ -166,7 +166,7 @@ namespace L1 {
 
     struct operator_leq : pegtl::string<'<', '='> {};
 
-    struct operator_cmp : pegtl::sor<operator_lq, operator_eq, operator_leq> {};
+    struct operator_cmp : pegtl::sor<operator_leq, operator_lq, operator_eq> {};
 
     struct operand_sop : pegtl::sor<number, pegtl::string<'r', 'c', 'x'>> {};
 
@@ -211,9 +211,7 @@ namespace L1 {
                             operator_inc, operator_dec,
                             pegtl::seq<
                                 operator_moveq, seps,
-                                pegtl::sor<
-                                    s, inst_mem, pegtl::seq<t, seps, operator_cmp, t>
-                                >
+                                pegtl::sor<inst_mem, pegtl::seq<t, seps, operator_cmp, seps, t>, s>
                             >,
                             pegtl::seq<operator_at, seps, w, seps, w, seps, E>,
                             pegtl::seq<operator_sop, seps, operand_sop>,
@@ -570,7 +568,19 @@ namespace L1 {
         }
     };
 
+    template<>
+    struct action<inst_cjump> {
+        static void apply(const pegtl::input &in, L1::Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(L1::Operator_Type::CJUMP);
+        }
+    };
 
+    template<>
+    struct action<inst_cjump_label> {
+        static void apply(const pegtl::input &in, L1::Program &p) {
+            p.functions.back()->instructions.back()->operands.push_back(in.string());
+        }
+    };
 
 
 
