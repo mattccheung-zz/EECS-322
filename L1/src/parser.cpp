@@ -377,6 +377,13 @@ namespace L1 {
         }
     };
 
+template<>
+struct action<operand_sop> {
+    static void apply(const pegtl::input &in, L1::Program &p) {
+        p.functions.back()->instructions.back()->operands.push_back(in.string());
+    }
+};
+
     template<>
     struct action<inst_label> {
         static void apply(const pegtl::input &in, L1::Program &p) {
@@ -488,10 +495,17 @@ namespace L1 {
         }
     };
 
+template<>
+struct action<operator_at> {
+    static void apply(const pegtl::input &in, L1::Program &p) {
+        p.functions.back()->instructions.back()->operators.push_back(L1::Operator_Type::CJUMP);
+    }
+};
+
     template<>
     struct action<inst_goto> {
         static void apply(const pegtl::input &in, L1::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L1::Operator_Type::JMP);
+            p.functions.back()->instructions.back()->operators.push_back(L1::Operator_Type::GOTO);
         }
     };
 
