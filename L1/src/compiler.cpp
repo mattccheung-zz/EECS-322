@@ -221,9 +221,9 @@ int main(int argc, char **argv) {
                         }
                     } else if (operand2[0] != 'r') {
                         output << "\tcmpq " << get_operand(operand2) << ", " << get_operand(operand3) << endl;
-                        if (inst->operators[0] == L1::Operator_Type::LEQ) {
+                        if (inst->operators[1] == L1::Operator_Type::LEQ) {
                             output << "\tjg ";
-                        } else if (inst->operators[0] == L1::Operator_Type::LQ) {
+                        } else if (inst->operators[1] == L1::Operator_Type::LQ) {
                             output << "\tjge ";
                         } else {
                             output << "\tje ";
@@ -232,9 +232,9 @@ int main(int argc, char **argv) {
                         output << "\tjmp " << operand;
                     } else {
                         output << "\tcmpq " << get_operand(operand3) << ", " << get_operand(operand2) << endl;
-                        if (inst->operators[0] == L1::Operator_Type::LEQ) {
+                        if (inst->operators[1] == L1::Operator_Type::LEQ) {
                             output << "\tjle ";
-                        } else if (inst->operators[0] == L1::Operator_Type::LQ) {
+                        } else if (inst->operators[1] == L1::Operator_Type::LQ) {
                             output << "\tjl ";
                         } else {
                             output << "\tje ";
