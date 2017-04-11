@@ -11,11 +11,16 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <iostream>
+#include <fstream>
 
 #include "parser.h"
 
 using namespace std;
 
+
+string get_label(string operand) {
+    return "_" + operand.substr(1) + ":";
+}
 
 string get_operand(string operand) {
     if (operand[0] == ':') {
@@ -23,7 +28,7 @@ string get_operand(string operand) {
     } else if (operand[0] == 'r') {
         return "%" + operand;
     } else {
-        return "$" + operand;
+        return operand[0] == '+' ? "$" + operand.substr(1) : "$" + operand;
     }
 }
 
@@ -59,7 +64,7 @@ bool eval_inst(string operand1, string operand2, L1::Operator_Type op) {
         case L1::Operator_Type::EQ:
             return a == b;
         default:
-            cout << "error in eval_inst" << endl;
+            cerr << "error in eval_inst" << endl;
             return false;
     }
 }
@@ -103,172 +108,196 @@ int main(int argc, char **argv) {
     /* Generate x86_64 code
      */
 
-    cout << p.entryPointLabel << endl;
+    ofstream output;
+    output.open("prog.S");
+
+    output << ".text" << endl
+         << "\t.globl go" << endl
+         << "go:" << endl
+         << "\tpushq %rbx" << endl
+         << "\tpushq %rbp" << endl
+         << "\tpushq %r12" << endl
+         << "\tpushq %r13" << endl
+         << "\tpushq %r14" << endl
+         << "\tpushq %r15" << endl
+         << "\tcall " << get_call_operand(p.entryPointLabel) << endl
+         << "\tpopq %r15" << endl
+         << "\tpopq %r14" << endl
+         << "\tpopq %r13" << endl
+         << "\tpopq %r12" << endl
+         << "\tpopq %rbp" << endl
+         << "\tpopq %rbx" << endl
+         << "\tretq" << endl;
 
     string label, operand, operand2, operand3;
 
     for (auto f : p.functions) {
-        cout << "\t" << f->name << endl << "\t" << f->arguments << "\t" << f->locals << endl;
+        output << get_label(f->name) << endl;
+        if (f->locals > 0) {
+            output << "\tsubq $" << f->locals * 8 << ", %rsp" << endl;
+        }
         for (auto inst : f->instructions) {
             switch (inst->operators.front()) {
                 case L1::Operator_Type::MOVQ:
                     operand = get_operand(inst->operands[0]);
                     if (inst->operators.size() == 1) {
-                        cout << "\t\tmovq " << get_operand(inst->operands[1]) << ", " << operand;
+                        output << "\tmovq " << get_operand(inst->operands[1]) << ", " << operand;
                     } else if (inst->operators[1] == L1::Operator_Type::MEM) {
-                        cout << "\t\tmovq " << get_mem_operand(inst->operands[1], inst->operands[2]) << ", " << operand;
+                        output << "\tmovq " << get_mem_operand(inst->operands[1], inst->operands[2]) << ", " << operand;
                     } else {
                         operand2 = inst->operands[1];
                         operand3 = inst->operands[2];
                         if (operand2[0] != 'r' && operand3[0] != 'r') {
                             if (eval_inst(operand2, operand3, inst->operators[1])) {
-                                cout << "\t\tmovq $1, " << operand;
+                                output << "\tmovq $1, " << operand;
                             } else {
-                                cout << "\t\tmovq $0, " << operand;
+                                output << "\tmovq $0, " << operand;
                             }
                         } else if (operand2[0] != 'r') {
-                            cout << "\t\tcmpq " << get_operand(operand2) << ", " <<  get_operand(operand3) << endl;
+                            output << "\tcmpq " << get_operand(operand2) << ", " <<  get_operand(operand3) << endl;
                             label = get_low_register(operand3);
                             if (inst->operators[1] == L1::Operator_Type::LQ) {
-                                cout << "\t\tsetge " << label << endl;
+                                output << "\tsetge " << label << endl;
                             } else if (inst->operators[1] == L1::Operator_Type::LEQ) {
-                                cout << "\t\tsetg " << label << endl;
+                                output << "\tsetg " << label << endl;
                             } else {
-                                cout << "\t\tsete " << label << endl;
+                                output << "\tsete " << label << endl;
                             }
-                            cout << "\t\tmovzbq " << label << ", " << operand;
+                            output << "\tmovzbq " << label << ", " << operand;
                         } else {
-                            cout << "\t\tcmpq " << get_operand(operand3) << ", " <<  get_operand(operand2) << endl;
+                            output << "\tcmpq " << get_operand(operand3) << ", " <<  get_operand(operand2) << endl;
                             label = get_low_register(operand2);
                             if (inst->operators[1] == L1::Operator_Type::LQ) {
-                                cout << "\t\tsetl " << label << endl;
+                                output << "\tsetl " << label << endl;
                             } else if (inst->operators[1] == L1::Operator_Type::LEQ) {
-                                cout << "\t\tsetle " << label << endl;
+                                output << "\tsetle " << label << endl;
                             } else {
-                                cout << "\t\tsete " << label << endl;
+                                output << "\tsete " << label << endl;
                             }
-                            cout << "\t\tmovzbq " << label << ", " << operand;
+                            output << "\tmovzbq " << label << ", " << operand;
                         }
                     }
                     break;
                 case L1::Operator_Type::ADDQ:
-                    cout << "\t\taddq ";
+                    output << "\taddq ";
                     if (inst->operators.size() == 1) {
-                        cout << get_operand(inst->operands[1]);
+                        output << get_operand(inst->operands[1]);
                     } else {
-                        cout << get_mem_operand(inst->operands[1], inst->operands[2]);
+                        output << get_mem_operand(inst->operands[1], inst->operands[2]);
                     }
-                    cout << ", " << get_operand(inst->operands[0]);
+                    output << ", " << get_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::SUBQ:
-                    cout << "\t\tsubq ";
+                    output << "\tsubq ";
                     if (inst->operators.size() == 1) {
-                        cout << get_operand(inst->operands[1]);
+                        output << get_operand(inst->operands[1]);
                     } else {
-                        cout << get_mem_operand(inst->operands[1], inst->operands[2]);
+                        output << get_mem_operand(inst->operands[1], inst->operands[2]);
                     }
-                    cout << ", " << get_operand(inst->operands[0]);
+                    output << ", " << get_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::IMULQ:
-                    cout << "\t\timulq " << get_operand(inst->operands[1]) << ", " << get_operand(inst->operands[0]);
+                    output << "\timulq " << get_operand(inst->operands[1]) << ", " << get_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::ANDQ:
-                    cout << "\t\tandq " << get_operand(inst->operands[1]) << ", " << get_operand(inst->operands[0]);
+                    output << "\tandq " << get_operand(inst->operands[1]) << ", " << get_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::SALQ:
-                    cout << "\t\tsalq " << get_shift_operand(inst->operands[1]) << ", " << get_operand(inst->operands[0]);
+                    output << "\tsalq " << get_shift_operand(inst->operands[1]) << ", " << get_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::SARQ:
-                    cout << "\t\tsarq " << get_shift_operand(inst->operands[1]) << ", " << get_operand(inst->operands[0]);
+                    output << "\tsarq " << get_shift_operand(inst->operands[1]) << ", " << get_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::CJUMP:
-                    label = get_operand(inst->operands[2]);
-                    operand = get_operand(inst->operands[3]);
+                    label = get_call_operand(inst->operands[2]);
+                    operand = get_call_operand(inst->operands[3]);
                     operand2 = inst->operands[0];
                     operand3 = inst->operands[1];
                     if (operand2[0] != 'r' && operand3[0] != 'r') {
                         if (eval_inst(operand2, operand3, inst->operators[1])) {
-                            cout << "\t\tjmp " << label;
+                            output << "\tjmp " << label;
                         } else {
-                            cout << "\t\tjmp " << operand;
+                            output << "\tjmp " << operand;
                         }
                     } else if (operand2[0] != 'r') {
-                        cout << "\t\tcmpq " << operand2 << ", " << operand3 << endl;
+                        output << "\tcmpq " << get_operand(operand2) << ", " << get_operand(operand3) << endl;
                         if (inst->operators[0] == L1::Operator_Type::LEQ) {
-                            cout << "\t\tjg ";
+                            output << "\tjg ";
                         } else if (inst->operators[0] == L1::Operator_Type::LQ) {
-                            cout << "\t\tjge ";
+                            output << "\tjge ";
                         } else {
-                            cout << "\t\tje ";
+                            output << "\tje ";
                         }
-                        cout << label << endl;
-                        cout << "\t\tjmp " << operand;
+                        output << label << endl;
+                        output << "\tjmp " << operand;
                     } else {
-                        cout << "\t\tcmpq " << operand3 << ", " << operand2 << endl;
+                        output << "\tcmpq " << get_operand(operand3) << ", " << get_operand(operand2) << endl;
                         if (inst->operators[0] == L1::Operator_Type::LEQ) {
-                            cout << "\t\tjle ";
+                            output << "\tjle ";
                         } else if (inst->operators[0] == L1::Operator_Type::LQ) {
-                            cout << "\t\tjl ";
+                            output << "\tjl ";
                         } else {
-                            cout << "\t\tje ";
+                            output << "\tje ";
                         }
-                        cout << label << endl;
-                        cout << "\t\tjmp " << operand;
+                        output << label << endl;
+                        output << "\tjmp " << operand;
                     }
                     break;
                 case L1::Operator_Type::LABEL:
-                    label = inst->operands.front();
-                    label[0] = '_';
-                    cout << "\t" << label;
+                    output << get_label(inst->operands[0]);
                     break;
                 case L1::Operator_Type::GOTO:
-                    cout << "\t\tjmp " << get_operand(inst->operands[0]);
+                    output << "\tjmp " << get_call_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::RETURN:
-                    cout << "\t\treq";
+                    output << "\tretq";
                     break;
                 case L1::Operator_Type::CALL:
-                    cout << "\t\tsubq " + get_call_shift(inst->operands[1]) << ", %rsp" << endl;
-                    cout << "\t\tjmp " + get_call_operand(inst->operands[0]);
+                    output << "\tsubq " + get_call_shift(inst->operands[1]) << ", %rsp" << endl;
+                    output << "\tjmp " + get_call_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::PRINT:
-                    cout << "\t\tcall print";
+                    output << "\tcall print";
                     break;
                 case L1::Operator_Type::ALLOCATE:
-                    cout << "\t\tcall allocate";
+                    output << "\tcall allocate";
                     break;
                 case L1::Operator_Type::ARRAY_ERROR:
-                    cout << "\t\tcall array-error";
+                    output << "\tcall array-error";
                     break;
                 case L1::Operator_Type::CISC:
-                    cout << "\t\tlea (" + get_operand(inst->operands[1]) << ", " << get_operand(inst->operands[2])
+                    output << "\tlea (" + get_operand(inst->operands[1]) << ", " << get_operand(inst->operands[2])
                             << ", " << inst->operands[3] << "), " << get_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::MEM:
                     operand = get_operand(inst->operands[2]);
                     operand2 = get_mem_operand(inst->operands[0], inst->operands[1]);
                     if (inst->operators[1] == L1::Operator_Type::ADDQ) {
-                        cout << "\t\taddq ";
+                        output << "\taddq ";
                     } else if (inst->operators[1] == L1::Operator_Type::SUBQ) {
-                        cout << "\t\tsubq ";
+                        output << "\tsubq ";
                     } else {
-                        cout << "\t\tmovq ";
+                        output << "\tmovq ";
                     }
-                    cout << operand << ", " << operand2;
+                    output << operand << ", " << operand2;
                     break;
                 case L1::Operator_Type::INC:
-                    cout << "\t\tinc " << get_operand(inst->operands[0]);
+                    output << "\tinc " << get_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::DEC:
-                    cout << "\t\tdec " << get_operand(inst->operands[0]);
+                    output << "\tdec " << get_operand(inst->operands[0]);
                     break;
                 default:
-                    cout << "\t\tERROR ASSEMBLY";
+                    output << "\tERROR ASSEMBLY";
                     break;
             }
-            cout << endl;
+            output << endl;
         }
     }
+
+    output << endl;
+
+    output.close();
 
     return 0;
 }
