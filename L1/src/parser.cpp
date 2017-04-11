@@ -498,7 +498,7 @@ struct action<operand_sop> {
 template<>
 struct action<operator_at> {
     static void apply(const pegtl::input &in, L1::Program &p) {
-        p.functions.back()->instructions.back()->operators.push_back(L1::Operator_Type::CJUMP);
+        p.functions.back()->instructions.back()->operators.push_back(L1::Operator_Type::CISC);
     }
 };
 

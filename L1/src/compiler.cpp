@@ -49,6 +49,30 @@ string get_shift_operand(string operand) {
     return operand[0] == 'r' ? "%cl" : "$" + operand;
 }
 
+bool eval_inst(string operand1, string operand2, L1::Operator_Type op) {
+    int64_t a = stoll(operand1), b = stoll(operand2);
+    switch (op) {
+        case L1::Operator_Type::LQ:
+            return a < b;
+        case L1::Operator_Type::LEQ:
+            return a <= b;
+        case L1::Operator_Type::EQ:
+            return a == b;
+        default:
+            cout << "error in eval_inst" << endl;
+            return false;
+    }
+}
+
+string get_low_register(string reg) {
+    if (reg[1] == '1' || reg[1] == '8' || reg[1] == '9') {
+        return "%" + reg + "b";
+    } else if (reg[2] == 'x') {
+        return "%" + string(1, reg[1]) + "l";
+    } else {
+        return "%" + reg.substr(1) + "l";
+    }
+}
 
 
 int main(int argc, char **argv) {
@@ -91,11 +115,39 @@ int main(int argc, char **argv) {
                     operand = get_operand(inst->operands[0]);
                     if (inst->operators.size() == 1) {
                         cout << "\t\tmovq " << get_operand(inst->operands[1]) << ", " << operand;
+                    } else if (inst->operators[1] == L1::Operator_Type::MEM) {
+                        cout << "\t\tmovq " << get_mem_operand(inst->operands[1], inst->operands[2]) << ", " << operand;
                     } else {
-                        if (inst->operators[1] == L1::Operator_Type::MEM) {
-                            cout << "\t\tmovq " << get_mem_operand(inst->operands[1], inst->operands[2]) << ", " << operand;
+                        operand2 = inst->operands[1];
+                        operand3 = inst->operands[2];
+                        if (operand2[0] != 'r' && operand3[0] != 'r') {
+                            if (eval_inst(operand2, operand3, inst->operators[1])) {
+                                cout << "\t\tmovq $1, " << operand;
+                            } else {
+                                cout << "\t\tmovq $0, " << operand;
+                            }
+                        } else if (operand2[0] != 'r') {
+                            cout << "\t\tcmpq " << get_operand(operand2) << ", " <<  get_operand(operand3) << endl;
+                            label = get_low_register(operand3);
+                            if (inst->operators[1] == L1::Operator_Type::LQ) {
+                                cout << "\t\tsetge " << label << endl;
+                            } else if (inst->operators[1] == L1::Operator_Type::LEQ) {
+                                cout << "\t\tsetg " << label << endl;
+                            } else {
+                                cout << "\t\tsete " << label << endl;
+                            }
+                            cout << "\t\tmovzbq " << label << ", " << operand;
                         } else {
-                            cout << "\t\tcmpq to be implemented";
+                            cout << "\t\tcmpq " << get_operand(operand3) << ", " <<  get_operand(operand2) << endl;
+                            label = get_low_register(operand2);
+                            if (inst->operators[1] == L1::Operator_Type::LQ) {
+                                cout << "\t\tsetl " << label << endl;
+                            } else if (inst->operators[1] == L1::Operator_Type::LEQ) {
+                                cout << "\t\tsetle " << label << endl;
+                            } else {
+                                cout << "\t\tsete " << label << endl;
+                            }
+                            cout << "\t\tmovzbq " << label << ", " << operand;
                         }
                     }
                     break;
@@ -130,16 +182,39 @@ int main(int argc, char **argv) {
                     cout << "\t\tsarq " << get_shift_operand(inst->operands[1]) << ", " << get_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::CJUMP:
-                    cout << "\t\tcmpq " << get_operand(inst->operands[1]) << ", " << get_operand(inst->operands[0]) << endl;
-                    if (inst->operators[0] == L1::Operator_Type::LEQ) {
-                        cout << "\t\tjge ";
-                    } else if (inst->operators[0] == L1::Operator_Type::LQ) {
-                        cout << "\t\tjg ";
+                    label = get_operand(inst->operands[2]);
+                    operand = get_operand(inst->operands[3]);
+                    operand2 = inst->operands[0];
+                    operand3 = inst->operands[1];
+                    if (operand2[0] != 'r' && operand3[0] != 'r') {
+                        if (eval_inst(operand2, operand3, inst->operators[1])) {
+                            cout << "\t\tjmp " << label;
+                        } else {
+                            cout << "\t\tjmp " << operand;
+                        }
+                    } else if (operand2[0] != 'r') {
+                        cout << "\t\tcmpq " << operand2 << ", " << operand3 << endl;
+                        if (inst->operators[0] == L1::Operator_Type::LEQ) {
+                            cout << "\t\tjg ";
+                        } else if (inst->operators[0] == L1::Operator_Type::LQ) {
+                            cout << "\t\tjge ";
+                        } else {
+                            cout << "\t\tje ";
+                        }
+                        cout << label << endl;
+                        cout << "\t\tjmp " << operand;
                     } else {
-                        cout << "\t\tje ";
+                        cout << "\t\tcmpq " << operand3 << ", " << operand2 << endl;
+                        if (inst->operators[0] == L1::Operator_Type::LEQ) {
+                            cout << "\t\tjle ";
+                        } else if (inst->operators[0] == L1::Operator_Type::LQ) {
+                            cout << "\t\tjl ";
+                        } else {
+                            cout << "\t\tje ";
+                        }
+                        cout << label << endl;
+                        cout << "\t\tjmp " << operand;
                     }
-                    cout << get_operand(inst->operands[2]) << endl;
-                    cout << "\t\tjmp " << get_operand(inst->operands[3]);
                     break;
                 case L1::Operator_Type::LABEL:
                     label = inst->operands.front();
@@ -166,9 +241,8 @@ int main(int argc, char **argv) {
                     cout << "\t\tcall array-error";
                     break;
                 case L1::Operator_Type::CISC:
-                    cout << inst->operands.size() << endl;
                     cout << "\t\tlea (" + get_operand(inst->operands[1]) << ", " << get_operand(inst->operands[2])
-                            << ", " << inst->operands[3] << ", " << get_operand(inst->operands[0]);
+                            << ", " << inst->operands[3] << "), " << get_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::MEM:
                     operand = get_operand(inst->operands[2]);
