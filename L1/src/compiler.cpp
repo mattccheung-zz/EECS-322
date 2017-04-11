@@ -250,8 +250,8 @@ int main(int argc, char **argv) {
                     output << "\tjmp " << get_call_operand(inst->operands[0]);
                     break;
                 case L1::Operator_Type::RETURN:
-                    if (f->locals > 0) {
-                        output << "\taddq $" << f->locals * 8 << ", %rsp" << endl;
+                    if (f->locals > 0 || f->arguments > 6) {
+                        output << "\taddq $" << (f->arguments > 6 ? f->arguments - 6 + f->locals : f->locals) * 8 << ", %rsp" << endl;
                     }
                     output << "\tretq";
                     break;
