@@ -266,7 +266,7 @@ int main(int argc, char **argv) {
                     output << "\tcall allocate";
                     break;
                 case L1::Operator_Type::ARRAY_ERROR:
-                    output << "\tcall array-error";
+                    output << "\tcall array_error";
                     break;
                 case L1::Operator_Type::CISC:
                     output << "\tlea (" + get_operand(inst->operands[1]) << ", " << get_operand(inst->operands[2])
