@@ -116,29 +116,31 @@ int main(int argc, char **argv) {
             case Operator_Type::RETURN:
                 gen[i] = {"rax", "r12", "r13", "r14", "r15", "rbp", "rbx"};
                 break;
-            case Operator_Type::PRINT:
-            case Operator_Type::ALLOCATE:
-            case Operator_Type::ARRAY_ERROR:
             case Operator_Type::CALL:
                 kill[i] = {"r10", "r11", "r8", "r9", "rax", "rcx", "rdi", "rdx", "rsi"};
-                switch (stoll(inst->operands[1])) {
+                switch ((int)stoll(inst->operands[1])) {
                     case 0:
                         break;
                     case 1:
                         gen[i] = {"rdi"};
+                        break;
                     case 2:
                         gen[i] = {"rdi", "rsi"};
+                        break;
                     case 3:
                         gen[i] = {"rdi", "rsi", "rdx"};
+                        break;
                     case 4:
                         gen[i] = {"rdi", "rsi", "rdx", "rcx"};
+                        break;
                     case 5:
                         gen[i] = {"rdi", "rsi", "rdx", "rcx", "r8"};
+                        break;
                     default:
                         gen[i] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
                         break;
                 }
-                if (inst->operators.front() == Operator_Type::CALL) {
+                if (inst->operands[0] != "print" && inst->operands[0] != "allocate" && inst->operands[0] != "array_error") {
                     insert_var(gen[i], inst->operands[0], false);
                 }
                 break;
