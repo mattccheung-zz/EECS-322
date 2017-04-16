@@ -47,7 +47,7 @@ void print_result(set <string> in[], set <string> out[], int n) {
 }
 
 inline void insert_var(set<string> &ss, string &s, bool flag = true) {
-    if (flag || (s[0] != ':' && s[0] != '+' && s[0] != '-' && (s[0] < '0' || s[0] > '9'))) {
+    if (flag || (s != "rsp" && s[0] != ':' && s[0] != '+' && s[0] != '-' && (s[0] < '0' || s[0] > '9'))) {
         ss.insert(s);
     }
 }
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
                 if (inst->operators.size() == 1) {
                     insert_var(gen[i], inst->operands[1], false);
                 } else if (inst->operators[1] == Operator_Type::MEM) {
-                    insert_var(gen[i], inst->operands[1]);
+                    insert_var(gen[i], inst->operands[1], false);
                 } else if (inst->operators[1] != Operator_Type::STACK_ARG) {
                     insert_var(gen[i], inst->operands[1], false);
                     insert_var(gen[i], inst->operands[2], false);
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
                 insert_var(gen[i], inst->operands[2]);
                 break;
             case Operator_Type::MEM:
-                insert_var(gen[i], inst->operands[0]);
+                insert_var(gen[i], inst->operands[0], false);
                 insert_var(gen[i], inst->operands[2], false);
                 break;
             case Operator_Type::INC:
