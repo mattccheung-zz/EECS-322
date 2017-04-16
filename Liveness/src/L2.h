@@ -12,7 +12,7 @@ namespace L2 {
     };
 
     struct Instruction {
-        std::vector<L2::Operator_Type> operators;
+        std::vector<Operator_Type> operators;
         std::vector<std::string> operands;
     };
 
@@ -20,12 +20,12 @@ namespace L2 {
         std::string name;
         int64_t arguments;
         int64_t locals;
-        std::vector<L2::Instruction *> instructions;
+        std::vector<Instruction *> instructions;
     };
 
     struct Program {
         std::string entryPointLabel;
-        std::vector<L2::Function *> functions;
+        std::vector<Function *> functions;
     };
 
 } // L2
