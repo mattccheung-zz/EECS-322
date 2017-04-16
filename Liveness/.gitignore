@@ -1,5 +1,6 @@
 # Created by .ignore support plugin (hsz.mobi)
-bin/L2
+bin/
+obj/
 *.o
 *.S
 core.*
