@@ -172,20 +172,6 @@ namespace L2 {
                 seps,
                 pegtl::sor<
                     pegtl::seq<
-                        w, seps,
-                        pegtl::sor<
-                            operator_inc, operator_dec,
-                            pegtl::seq<
-                                operator_movq, seps,
-                                pegtl::sor<pegtl::seq<t, seps, operator_cmp, seps, t>, s, inst_mem, inst_stack_arg>
-                            >,
-                            pegtl::seq<operator_at, seps, w, seps, w, seps, E>,
-                            pegtl::seq<operator_sop, seps, operand_sop>,
-                            pegtl::seq<pegtl::sor<operator_addq, operator_subq>, seps, pegtl::sor<t, inst_mem>>,
-                            pegtl::seq<pegtl::sor<operator_imulq, operator_andq>, seps, t>
-                        >
-                    >,
-                    pegtl::seq<
                         inst_mem, seps,
                         pegtl::sor<
                             pegtl::seq<operator_movq, seps, s>,
@@ -202,6 +188,20 @@ namespace L2 {
                             pegtl::seq<inst_print, seps, pegtl::one<'1'>>,
                             pegtl::seq<inst_allocate, seps, pegtl::one<'2'>>,
                             pegtl::seq<inst_array_error, seps, pegtl::one<'2'>>
+                        >
+                    >,
+                    pegtl::seq<
+                        w, seps,
+                            pegtl::sor<
+                                operator_inc, operator_dec,
+                                pegtl::seq<
+                                operator_movq, seps,
+                                pegtl::sor<pegtl::seq<t, seps, operator_cmp, seps, t>, s, inst_mem, inst_stack_arg>
+                            >,
+                            pegtl::seq<operator_at, seps, w, seps, w, seps, E>,
+                            pegtl::seq<operator_sop, seps, operand_sop>,
+                            pegtl::seq<pegtl::sor<operator_addq, operator_subq>, seps, pegtl::sor<t, inst_mem>>,
+                            pegtl::seq<pegtl::sor<operator_imulq, operator_andq>, seps, t>
                         >
                     >
                 >,
