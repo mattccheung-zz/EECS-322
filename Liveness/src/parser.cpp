@@ -248,25 +248,24 @@ namespace L2 {
             seps
         > {};
 
-    struct grammar : pegtl::must<entry_point_rule> {};
 
-    /*
-     * Actions attached to grammar rules.
-     */
+
+
+
     template<typename Rule>
     struct action : pegtl::nothing<Rule> {};
 
     template<>
     struct action<entry_point_label> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.entryPointLabel = in.string();
         }
     };
 
     template<>
     struct action<function_name> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            L2::Function *newF = new L2::Function();
+        static void apply(const pegtl::input &in, Program &p) {
+            Function *newF = new Function();
             newF->name = in.string();
             p.functions.push_back(newF);
         }
@@ -274,79 +273,79 @@ namespace L2 {
 
     template<>
     struct action<argument_number> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->arguments = std::stoll(in.string());
         }
     };
 
     template<>
     struct action<local_number> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->locals = std::stoll(in.string());
         }
     };
 
     template<>
     struct action<w> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.back()->operands.push_back(in.string());
         }
     };
 
     template<>
     struct action<s> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.back()->operands.push_back(in.string());
         }
     };
 
     template<>
     struct action<t> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.back()->operands.push_back(in.string());
         }
     };
 
     template<>
     struct action<u> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.back()->operands.push_back(in.string());
         }
     };
 
     template<>
     struct action<x> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.back()->operands.push_back(in.string());
         }
     };
 
     template<>
     struct action<E> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.back()->operands.push_back(in.string());
         }
     };
 
     template<>
     struct action<M> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.back()->operands.push_back(in.string());
         }
     };
 
-template<>
-struct action<operand_sop> {
-    static void apply(const pegtl::input &in, L2::Program &p) {
-        p.functions.back()->instructions.back()->operands.push_back(in.string());
-    }
-};
+    template<>
+    struct action<operand_sop> {
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operands.push_back(in.string());
+        }
+    };
 
     template<>
     struct action<inst_label> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            L2::Instruction *newI = new L2::Instruction();
-            newI->operators.push_back(L2::Operator_Type::LABEL);
+        static void apply(const pegtl::input &in, Program &p) {
+            Instruction *newI = new Instruction();
+            newI->operators.push_back(Operator_Type::LABEL);
             newI->operands.push_back(in.string());
             p.functions.back()->instructions.push_back(newI);
         }
@@ -354,197 +353,209 @@ struct action<operand_sop> {
 
     template<>
     struct action<inst_start> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.push_back(new L2::Instruction());
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.push_back(new Instruction());
         }
     };
 
     template<>
     struct action<operator_movq> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::MOVQ);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::MOVQ);
         }
     };
 
     template<>
     struct action<mem> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::MEM);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::MEM);
         }
     };
 
     template<>
     struct action<stack_arg> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::STACK_ARG);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::STACK_ARG);
         }
     };
 
     template<>
     struct action<operator_addq> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::ADDQ);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::ADDQ);
         }
     };
 
     template<>
     struct action<operator_subq> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::SUBQ);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::SUBQ);
         }
     };
 
     template<>
     struct action<operator_imulq> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::IMULQ);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::IMULQ);
         }
     };
 
     template<>
     struct action<operator_andq> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::ANDQ);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::ANDQ);
         }
     };
 
     template<>
     struct action<operator_salq> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::SALQ);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::SALQ);
         }
     };
 
     template<>
     struct action<operator_lq> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::LQ);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::LQ);
         }
     };
 
     template<>
     struct action<operator_leq> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::LEQ);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::LEQ);
         }
     };
 
     template<>
     struct action<operator_eq> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::EQ);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::EQ);
         }
     };
 
     template<>
     struct action<operator_inc> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::INC);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::INC);
         }
     };
 
     template<>
     struct action<operator_dec> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::DEC);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::DEC);
         }
     };
 
     template<>
     struct action<operator_sarq> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::SARQ);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::SARQ);
         }
     };
 
-template<>
-struct action<operator_at> {
-    static void apply(const pegtl::input &in, L2::Program &p) {
-        p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::CISC);
-    }
-};
+    template<>
+    struct action<operator_at> {
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::CISC);
+        }
+    };
 
     template<>
     struct action<inst_goto> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::GOTO);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::GOTO);
         }
     };
 
     template<>
     struct action<goto_label> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.back()->operands.push_back(in.string());
         }
     };
 
     template<>
     struct action<inst_return> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::RETURN);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::RETURN);
         }
     };
 
     template<>
     struct action<inst_call> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::CALL);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::CALL);
         }
     };
 
     template<>
     struct action<inst_call_number> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.back()->operands.push_back(in.string());
         }
     };
 
     template<>
     struct action<inst_print> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            vector<L2::Operator_Type> operators = p.functions.back()->instructions.back()->operators;
+        static void apply(const pegtl::input &in, Program &p) {
+            vector<Operator_Type> operators = p.functions.back()->instructions.back()->operators;
             operators.clear();
-            operators.push_back(L2::Operator_Type::PRINT);
+            operators.push_back(Operator_Type::PRINT);
         }
     };
 
     template<>
     struct action<inst_allocate> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            vector<L2::Operator_Type> operators = p.functions.back()->instructions.back()->operators;
+        static void apply(const pegtl::input &in, Program &p) {
+            vector<Operator_Type> operators = p.functions.back()->instructions.back()->operators;
             operators.clear();
-            operators.push_back(L2::Operator_Type::ALLOCATE);
+            operators.push_back(Operator_Type::ALLOCATE);
         }
     };
 
     template<>
     struct action<inst_array_error> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            vector<L2::Operator_Type> operators = p.functions.back()->instructions.back()->operators;
+        static void apply(const pegtl::input &in, Program &p) {
+            vector<Operator_Type> operators = p.functions.back()->instructions.back()->operators;
             operators.clear();
-            operators.push_back(L2::Operator_Type::ARRAY_ERROR);
+            operators.push_back(Operator_Type::ARRAY_ERROR);
         }
     };
 
     template<>
     struct action<inst_cjump> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
-            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::CJUMP);
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(Operator_Type::CJUMP);
         }
     };
 
     template<>
     struct action<inst_cjump_label> {
-        static void apply(const pegtl::input &in, L2::Program &p) {
+        static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.back()->operands.push_back(in.string());
         }
     };
 
 
     Program L2_parse_file(char *fileName) {
-        pegtl::analyze<L2::grammar>();
-        L2::Program p;
-        pegtl::file_parser(fileName).parse<L2::grammar, L2::action>(p);
+        struct grammar : pegtl::must<entry_point_rule> {};
+        pegtl::analyze<grammar>();
+        Program p;
+        pegtl::file_parser(fileName).parse<grammar, action>(p);
+        return p;
+    }
+
+
+    struct function_entry_point_rule : pegtl::seq<seps, L2_function_rule, seps> {};
+
+    Program L2_parse_function(char *file) {
+        struct function_grammar : pegtl::must<function_entry_point_rule> {};
+        pegtl::analyze<function_grammar>();
+        Program p;
+        pegtl::file_parser(file).parse<function_grammar, action>(p);
         return p;
     }
 
