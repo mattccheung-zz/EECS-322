@@ -43,7 +43,7 @@ void print_result(set <string> in[], set <string> out[], int n) {
     for (int i = 0; i < n; i++) {
         cout << out[i] << endl;
     }
-    cout << ')' << endl;
+    cout << ')' << endl << endl << ')' << endl;
 }
 
 inline void insert_var(set<string> &ss, string &s, bool flag = true) {
