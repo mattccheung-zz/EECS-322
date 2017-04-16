@@ -20,66 +20,40 @@ using namespace std;
 
 namespace L2 {
 
-    /*
-     * Grammar rules from now on.
-     */
-    struct label :
+    struct variable :
         pegtl::seq<
-            pegtl::one<':'>,
-            pegtl::plus<
-                pegtl::sor<
-                    pegtl::alpha,
-                    pegtl::one<'_'>
-                >
-            >,
-            pegtl::star<
-                pegtl::sor<
-                    pegtl::alpha,
-                    pegtl::one<'_'>,
-                    pegtl::digit
-                >
-            >
+            pegtl::plus<pegtl::sor<pegtl::alpha, pegtl::one<'_'>>>,
+            pegtl::star<pegtl::sor<pegtl::alpha, pegtl::one<'_'>, pegtl::digit>>
         > {};
+
+    struct label : pegtl::seq<pegtl::one<':'>, variable> {};
+
+    struct entry_point_label : label {};
 
     struct function_name : label {};
 
     struct number :
         pegtl::seq<
-            pegtl::opt<
-                pegtl::sor<
-                    pegtl::one<'-'>,
-                    pegtl::one<'+'>
-                >
-            >,
-            pegtl::plus<
-                pegtl::digit
-            >
+            pegtl::opt<pegtl::sor<pegtl::one<'-'>, pegtl::one<'+'>>>,
+            pegtl::plus<pegtl::digit>
         >{};
 
     struct argument_number : number {};
 
     struct local_number : number {};
 
-    struct comment :
-        pegtl::disable<
-            pegtl::one<';'>,
-            pegtl::until<pegtl::eolf>
-        > {};
+    struct comment : pegtl::disable<pegtl::one<';'>, pegtl::until<pegtl::eolf>> {};
 
-    struct seps :
-        pegtl::star<
-            pegtl::sor<
-                pegtl::ascii::space,
-                comment
-            >
-        > {};
+    struct seps : pegtl::star<pegtl::sor<pegtl::ascii::space, comment>> {};
+
+    struct operand_sx : pegtl::sor<pegtl::string<'r', 'c', 'x'>, variable> {};
 
     struct operand_a :
         pegtl::sor<
             pegtl::string<'r', 'd', 'i'>,
             pegtl::string<'r', 's', 'i'>,
             pegtl::string<'r', 'd', 'x'>,
-            pegtl::string<'r', 'c', 'x'>,
+            operand_sx,
             pegtl::string<'r', '8'>,
             pegtl::string<'r', '9'>
         > {};
@@ -156,11 +130,15 @@ namespace L2 {
 
     struct operator_cmp : pegtl::sor<operator_leq, operator_lq, operator_eq> {};
 
-    struct operand_sop : pegtl::sor<number, pegtl::string<'r', 'c', 'x'>> {};
+    struct operand_sop : pegtl::sor<number, operand_sx> {};
 
     struct mem : pegtl::string<'m', 'e', 'm'> {};
 
     struct inst_mem : pegtl::seq<pegtl::one<'('>, seps, mem, seps, x, seps, M, seps, pegtl::one<')'>> {};
+
+    struct stack_arg : pegtl::string<'s', 't', 'a', 'c', 'k', '-', 'a', 'r', 'g'> {};
+
+    struct inst_stack_arg : pegtl::seq<pegtl::one<'('>, seps, stack_arg, seps, M, seps, pegtl::one<')'>> {};
 
     struct inst_cjump : pegtl::string<'c', 'j', 'u', 'm', 'p'> {};
 
@@ -199,7 +177,7 @@ namespace L2 {
                             operator_inc, operator_dec,
                             pegtl::seq<
                                 operator_movq, seps,
-                                pegtl::sor<pegtl::seq<t, seps, operator_cmp, seps, t>, s, inst_mem>
+                                pegtl::sor<pegtl::seq<t, seps, operator_cmp, seps, t>, s, inst_mem, inst_stack_arg>
                             >,
                             pegtl::seq<operator_at, seps, w, seps, w, seps, E>,
                             pegtl::seq<operator_sop, seps, operand_sop>,
@@ -234,8 +212,6 @@ namespace L2 {
 
     struct L2_instruction_rule : instruction {};
 
-//    struct L2_label_rule : label {};
-
     struct L2_function_rule :
         pegtl::seq<
             pegtl::one<'('>,
@@ -260,7 +236,7 @@ namespace L2 {
             seps,
             pegtl::one<'('>,
             seps,
-            label,
+            entry_point_label,
             seps,
             pegtl::plus<
                 pegtl::seq<
@@ -275,22 +251,15 @@ namespace L2 {
     struct grammar : pegtl::must<entry_point_rule> {};
 
     /*
-     * Data structures required to parse
-     */
-    std::vector <L2_item> parsed_registers;
-
-    /*
      * Actions attached to grammar rules.
      */
     template<typename Rule>
     struct action : pegtl::nothing<Rule> {};
 
     template<>
-    struct action<label> {
+    struct action<entry_point_label> {
         static void apply(const pegtl::input &in, L2::Program &p) {
-            if (p.entryPointLabel.empty()) {
-                p.entryPointLabel = in.string();
-            }
+            p.entryPointLabel = in.string();
         }
     };
 
@@ -303,28 +272,17 @@ namespace L2 {
         }
     };
 
-//    template<>
-//    struct action<L2_label_rule> {
-//        static void apply(const pegtl::input &in, L2::Program &p) {
-//            L2_item i;
-//            i.labelName = in.string();
-//            parsed_registers.push_back(i);
-//        }
-//    };
-
     template<>
     struct action<argument_number> {
         static void apply(const pegtl::input &in, L2::Program &p) {
-            L2::Function *currentF = p.functions.back();
-            currentF->arguments = std::stoll(in.string());
+            p.functions.back()->arguments = std::stoll(in.string());
         }
     };
 
     template<>
     struct action<local_number> {
         static void apply(const pegtl::input &in, L2::Program &p) {
-            L2::Function *currentF = p.functions.back();
-            currentF->locals = std::stoll(in.string());
+            p.functions.back()->locals = std::stoll(in.string());
         }
     };
 
@@ -387,20 +345,17 @@ struct action<operand_sop> {
     template<>
     struct action<inst_label> {
         static void apply(const pegtl::input &in, L2::Program &p) {
-            L2::Function *currentF = p.functions.back();
             L2::Instruction *newI = new L2::Instruction();
-            currentF->instructions.push_back(newI);
             newI->operators.push_back(L2::Operator_Type::LABEL);
             newI->operands.push_back(in.string());
+            p.functions.back()->instructions.push_back(newI);
         }
     };
 
     template<>
     struct action<inst_start> {
         static void apply(const pegtl::input &in, L2::Program &p) {
-            L2::Function *currentF = p.functions.back();
-            L2::Instruction *newI = new L2::Instruction();
-            currentF->instructions.push_back(newI);
+            p.functions.back()->instructions.push_back(new L2::Instruction());
         }
     };
 
@@ -415,6 +370,13 @@ struct action<operand_sop> {
     struct action<mem> {
         static void apply(const pegtl::input &in, L2::Program &p) {
             p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::MEM);
+        }
+    };
+
+    template<>
+    struct action<stack_arg> {
+        static void apply(const pegtl::input &in, L2::Program &p) {
+            p.functions.back()->instructions.back()->operators.push_back(L2::Operator_Type::STACK_ARG);
         }
     };
 
@@ -540,33 +502,27 @@ struct action<operator_at> {
     template<>
     struct action<inst_print> {
         static void apply(const pegtl::input &in, L2::Program &p) {
-            L2::Instruction *currentI = p.functions.back()->instructions.back();
-            if (!currentI->operators.empty()) {
-                currentI->operators.clear();
-            }
-            currentI->operators.push_back(L2::Operator_Type::PRINT);
+            vector<L2::Operator_Type> operators = p.functions.back()->instructions.back()->operators;
+            operators.clear();
+            operators.push_back(L2::Operator_Type::PRINT);
         }
     };
 
     template<>
     struct action<inst_allocate> {
         static void apply(const pegtl::input &in, L2::Program &p) {
-            L2::Instruction *currentI = p.functions.back()->instructions.back();
-            if (!currentI->operators.empty()) {
-                currentI->operators.clear();
-            }
-            currentI->operators.push_back(L2::Operator_Type::ALLOCATE);
+            vector<L2::Operator_Type> operators = p.functions.back()->instructions.back()->operators;
+            operators.clear();
+            operators.push_back(L2::Operator_Type::ALLOCATE);
         }
     };
 
     template<>
     struct action<inst_array_error> {
         static void apply(const pegtl::input &in, L2::Program &p) {
-            L2::Instruction *currentI = p.functions.back()->instructions.back();
-            if (!currentI->operators.empty()) {
-                currentI->operators.clear();
-            }
-            currentI->operators.push_back(L2::Operator_Type::ARRAY_ERROR);
+            vector<L2::Operator_Type> operators = p.functions.back()->instructions.back()->operators;
+            operators.clear();
+            operators.push_back(L2::Operator_Type::ARRAY_ERROR);
         }
     };
 
@@ -585,20 +541,10 @@ struct action<operator_at> {
     };
 
 
-
     Program L2_parse_file(char *fileName) {
-
-        /*
-         * Check the grammar for some possible issues.
-         */
         pegtl::analyze<L2::grammar>();
-
-        /*
-         * Parse.
-         */
         L2::Program p;
         pegtl::file_parser(fileName).parse<L2::grammar, L2::action>(p);
-
         return p;
     }
 

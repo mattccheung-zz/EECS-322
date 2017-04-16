@@ -7,11 +7,8 @@ namespace L2 {
     enum Operator_Type {
         EMPTY, MOVQ, ADDQ, SUBQ, IMULQ, ANDQ, SALQ, SARQ,
         CJUMP, LABEL, GOTO, RETURN, CALL, PRINT, ALLOCATE,
-        ARRAY_ERROR, CISC, MEM, INC, DEC, LQ, EQ, LEQ
-    };
-
-    struct L2_item {
-        std::string labelName;
+        ARRAY_ERROR, CISC, MEM, INC, DEC, LQ, EQ, LEQ,
+        STACK_ARG
     };
 
     struct Instruction {
