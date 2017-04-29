@@ -1,0 +1,8 @@
+# Created by .ignore support plugin (hsz.mobi)
+bin/
+obj/
+*.o
+*.S
+core.*
+tests/liveness/*.tmp
+tests/*.tmp

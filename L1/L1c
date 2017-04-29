@@ -10,6 +10,6 @@ if ! test -f prog.o ; then
   exit ;
 fi
 
-gcc -O2 -c -g -o runtime.o lib/runtime.c
+gcc -O2 -c -g -o runtime.o ../lib/runtime.c
 
 gcc -o a.out prog.o runtime.o
