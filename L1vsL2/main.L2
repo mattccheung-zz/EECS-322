@@ -1,0 +1,71 @@
+(:main
+    (:main
+        0 1
+        (rdi <- 5)
+        (rsi <- 201)
+        (call allocate 2)
+        (VarArrayAddr <- rax)
+        (rdi <- 5)
+        (rsi <- 401)
+        (call allocate 2)
+        ((mem VarArrayAddr 16) <- rax)
+        ((mem rsp -8) <- :ret)
+        (rdi <- VarArrayAddr)
+        (call :print_array 1)
+        :ret
+        (return)
+    )
+    (:print_array
+        1 0
+        (VarArrayAddr <- rdi)
+        (VarTmp1 <- VarArrayAddr)
+        (VarTmp1 &= 1)
+        (cjump VarTmp1 = 0 :is_array_pa :not_array_pa)
+        :is_array_pa
+        (VarArraySize <- (mem VarArrayAddr 0))
+        (VarLoopIndex <- 0)
+        :loop_start
+        (cjump VarLoopIndex < VarArraySize :next :loop_end)
+        :next
+        (rdi <- VarArrayAddr)
+        (rsi <- VarLoopIndex)
+        ((mem rsp -8) <- :ret_print_array_element)
+        (call :print_array_element 2)
+        :ret_print_array_element
+        (VarLoopIndex++)
+        goto :loop_start
+        :loop_end
+        :not_array_pa
+        (rax <- 0)
+        (return)
+    )
+    (:print_array_element
+        2 0
+        (VarArrayAddr <- rdi)
+        (VarElementIndex <- rsi)
+        (rdi <- VarElementIndex)
+        (rdi <<= 1)
+        (rdi++)
+        (call print 1)
+        (VarElementIndex <<= 3)
+        (VarElementIndex += 8)
+        (rdi <- VarElementIndex)
+        (rdi <<= 1)
+        (rdi++)
+        (call print 1)
+        (VarArrayAddr += VarElementIndex)
+        (VarElement <- (mem VarArrayAddr 0))
+        (rdi <- VarElement)
+        (VarTmp <- VarElement)
+        (VarTmp &= 1)
+        (cjump VarTmp = 0 :is_array_pae :not_array_ape)
+        :is_array_pae
+        ((mem rsp -8) <- :ret_print_array)
+        (call :print_array 1)
+        :ret_print_array
+        (return)
+        :not_array_pae
+        (call print 1)
+        (return)
+    )
+)
