@@ -3,11 +3,11 @@
         0 1
         (rdi <- 7)
         (rsi <- 151)
-        (call allocate 3)
+        (call allocate 2)
         ((mem rsp 0) <- rax)
         (rdi <- 7)
         (rsi <- 301)
-        (call allocate 3)
+        (call allocate 2)
         (rdi <- (mem rsp 0))
         ((mem rdi 16) <- rax)
         ((mem rsp -8) <- :ret)
