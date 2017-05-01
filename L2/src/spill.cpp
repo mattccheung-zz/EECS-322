@@ -59,9 +59,13 @@ namespace L2 {
         func->locals = f->locals + 1;
         for (auto const &inst : f->instructions) {
             if (inst->operators[0] == Operator_Type::MEM && inst->operands[0] == "rsp") {
-                inst->operands[1] = to_string(stoll(inst->operands[1]) + 8);
+                if (stoll(inst->operands[1]) >= 0) {
+                    inst->operands[1] = to_string(stoll(inst->operands[1]) + 8);
+                }
             } else if (inst->operators.size() == 2 && inst->operators[1] == Operator_Type::MEM && inst->operands[1] == "rsp") {
-                inst->operands[2] = to_string(stoll(inst->operands[2]) + 8);
+                if (stoll(inst->operands[2]) >= 0) {
+                    inst->operands[2] = to_string(stoll(inst->operands[2]) + 8);
+                }
             }
         }
         for (auto const &inst : f->instructions) {
