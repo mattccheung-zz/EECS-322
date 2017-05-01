@@ -51,7 +51,7 @@ namespace L2 {
                 }
                 func->instructions.push_back(preInst);
                 func->instructions.push_back(midInst);
-                if (inst->operands[0] == sp) {
+                if (inst->operands[0] == sp && inst->operators[0] != Operator_Type::MEM) {
                     Instruction *postInst = new Instruction;
                     postInst->operators = {Operator_Type::MEM, Operator_Type::MOVQ};
                     postInst->operands = {"rsp", "0", nv};
