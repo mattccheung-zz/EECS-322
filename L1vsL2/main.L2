@@ -58,7 +58,7 @@
         (rdi <- VarElement)
         (VarTmp <- VarElement)
         (VarTmp &= 1)
-        (cjump VarTmp = 0 :is_array_pae :not_array_ape)
+        (cjump VarTmp = 0 :is_array_pae :not_array_pae)
         :is_array_pae
         ((mem rsp -8) <- :ret_print_array)
         (call :print_array 1)
