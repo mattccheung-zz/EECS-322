@@ -16,81 +16,69 @@ using namespace std;
 using namespace L2;
 
 
-ostream &operator<<(ostream &os, const Program &p) {
-    os << '(' << p.entryPointLabel << endl;
-    for (auto const &f : p.functions) {
-        os << "    (" << f->name << endl
-           << "    " << f->arguments << ' ' << f->locals << endl;
-        for (auto const &inst : f->instructions) {
-            os << "        " << inst << endl;
-        }
-        os << ')' << endl;
-    }
-    os << ')' << endl;
-    return os;
-}
-
-ostream &operator<<(ostream &os, const Instruction *inst) {
+ostream &operator<<(ostream &os, const Instruction &inst) {
     string op;
-    switch (inst->operators.front()) {
+    switch (inst.operators.front()) {
         case Operator_Type::MOVQ:
-            if (inst->operators.size() == 1) {
-                os << '(' << inst->operands[0] << " <- " << inst->operands[1] << ')';
-            } else if (inst->operators[1] == Operator_Type::MEM) {
-                os << '(' << inst->operands[0] << " <- (mem " << inst->operands[1] << ' ' << inst->operands[2] << "))";
+            if (inst.operators.size() == 1) {
+                os << '(' << inst.operands[0] << " <- " << inst.operands[1] << ')';
+            } else if (inst.operators[1] == Operator_Type::MEM) {
+                os << '(' << inst.operands[0] << " <- (mem " << inst.operands[1] << ' ' << inst.operands[2] << "))";
+            } else if (inst.operators[1] == Operator_Type::STACK_ARG) {
+                os << '(' << inst.operands[0] << " <- (stack-arg " << inst.operands[1] << "))";
             } else {
-                op = inst->operators[1] == Operator_Type::LQ ? " < " :
-                     (inst->operators[1] == Operator_Type::LEQ ? " <= " : " = ");
-                os << '(' << inst->operands[0] << " <- " << inst->operands[1] << op << inst->operands[2] << ")";
+                op = inst.operators[1] == Operator_Type::LQ ? " < " :
+                     (inst.operators[1] == Operator_Type::LEQ ? " <= " : " = ");
+                os << '(' << inst.operands[0] << " <- " << inst.operands[1] << op << inst.operands[2] << ")";
             }
             break;
         case Operator_Type::ADDQ:
         case Operator_Type::SUBQ:
-            op = inst->operators[0] == Operator_Type::ADDQ ? " += " : " -= ";
-            if (inst->operators.size() == 1) {
-                os << '(' << inst->operands[0] << op << inst->operands[1] << ')';
+            op = inst.operators[0] == Operator_Type::ADDQ ? " += " : " -= ";
+            if (inst.operators.size() == 1) {
+                os << '(' << inst.operands[0] << op << inst.operands[1] << ')';
             } else {
-                os << '(' << inst->operands[0] << op << "(mem " << inst->operands[1] << ' ' << inst->operands[2] << "))";
+                os << '(' << inst.operands[0] << op << "(mem " << inst.operands[1] << ' ' << inst.operands[2] << "))";
             }
             break;
         case Operator_Type::IMULQ:
         case Operator_Type::ANDQ:
         case Operator_Type::SALQ:
         case Operator_Type::SARQ:
-            op = inst->operators[0] == Operator_Type::IMULQ ? " *= " :
-                 (inst->operators[0] == Operator_Type::ANDQ ? " &= " :
-                  (inst->operators[0] == Operator_Type::SALQ ? " <<= " : " >>= "));
-            os << '(' << inst->operands[0] << op << inst->operands[1] << ')';
+            op = inst.operators[0] == Operator_Type::IMULQ ? " *= " :
+                 (inst.operators[0] == Operator_Type::ANDQ ? " &= " :
+                  (inst.operators[0] == Operator_Type::SALQ ? " <<= " : " >>= "));
+            os << '(' << inst.operands[0] << op << inst.operands[1] << ')';
             break;
         case Operator_Type::CJUMP:
-            op = inst->operators[1] == Operator_Type::LQ ? " < " :
-                 (inst->operators[1] == Operator_Type::LEQ ? " <= " : " = ");
-            os << "(cjump " << inst->operands[0] << op << inst->operands[1] << ' ' << inst->operands[2] << ' ' << inst->operands[3] << ')';
+            op = inst.operators[1] == Operator_Type::LQ ? " < " :
+                 (inst.operators[1] == Operator_Type::LEQ ? " <= " : " = ");
+            os << "(cjump " << inst.operands[0] << op << inst.operands[1] << ' ' << inst.operands[2] << ' ' << inst.operands[3] << ')';
             break;
         case Operator_Type::LABEL:
-            os << inst->operands[0];
+            os << inst.operands[0];
             break;
         case Operator_Type::GOTO:
-            os << "(goto " << inst->operands[0] << ')';
+            os << "(goto " << inst.operands[0] << ')';
             break;
         case Operator_Type::RETURN:
             os << "(return)";
             break;
         case Operator_Type::CALL:
-            os << "(call " << inst->operands[0] << ' ' << inst->operands[1] << ')';
+            os << "(call " << inst.operands[0] << ' ' << inst.operands[1] << ')';
             break;
         case Operator_Type::CISC:
-            os << '(' << inst->operands[0] << " @ " << inst->operands[1] << ' ' << inst->operands[2] << ' ' << inst->operands[3] << ')';
+            os << '(' << inst.operands[0] << " @ " << inst.operands[1] << ' ' << inst.operands[2] << ' ' << inst.operands[3] << ')';
             break;
         case Operator_Type::MEM:
-            op = inst->operators[1] == Operator_Type::MOVQ ? " <- " :
-                 (inst->operators[1] == Operator_Type::ADDQ ? " += " : " -= ");
-            os << "((mem " << inst->operands[0] << ' ' << inst->operands[1] << ')' << op << inst->operands[2] << ')';
+            op = inst.operators[1] == Operator_Type::MOVQ ? " <- " :
+                 (inst.operators[1] == Operator_Type::ADDQ ? " += " : " -= ");
+            os << "((mem " << inst.operands[0] << ' ' << inst.operands[1] << ')' << op << inst.operands[2] << ')';
             break;
         case Operator_Type::INC:
         case Operator_Type::DEC:
-            op = inst->operators[0] == Operator_Type::INC ? "++" : "--";
-            os << "(" << inst->operands[0] << op << ')';
+            op = inst.operators[0] == Operator_Type::INC ? "++" : "--";
+            os << "(" << inst.operands[0] << op << ')';
             break;
         default:
             cerr << "\tERROR L2" << endl;
@@ -98,6 +86,22 @@ ostream &operator<<(ostream &os, const Instruction *inst) {
     }
     return os;
 }
+
+ostream &operator<<(ostream &os, const Program &p) {
+    os << '(' << p.entryPointLabel << endl;
+    for (auto const &f : p.functions) {
+        os << "    (" << f->name << endl
+           << "    " << f->arguments << ' ' << f->locals << endl;
+        for (auto const &inst : f->instructions) {
+            os << "        " << *inst << endl;
+        }
+        os << "    )" << endl;
+    }
+    os << ')' << endl;
+    return os;
+}
+
+
 
 void remove_stack_arg(Program &p) {
     int64_t locals;
