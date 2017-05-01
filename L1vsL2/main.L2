@@ -1,6 +1,6 @@
 (:main
     (:main
-        0 1
+        0 0
         (rdi <- 5)
         (rsi <- 201)
         (call allocate 2)
@@ -33,7 +33,7 @@
         (call :print_array_element 2)
         :ret_print_array_element
         (VarLoopIndex++)
-        goto :loop_start
+        (goto :loop_start)
         :loop_end
         :not_array_pa
         (rax <- 0)
