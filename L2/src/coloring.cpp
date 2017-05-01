@@ -21,41 +21,36 @@ namespace L2 {
         return registers.find(s) != registers.end();
     }
 
-    bool rebuild_graph(const map<string, set<string>> &graph, map<string, set<string>> &graph_built,
-                       map<string, string> &reg_map, stack<string> &variable_stack) {
+    void rebuild_graph(const map<string, set<string>> &graph, map<string, string> &reg_map,
+                       stack<string> &variable_stack, set<string> &spill) {
+        set<string> adjacent_colors;
+        string node;
         while (!variable_stack.empty()) {
-            string node = variable_stack.top();
+            node = variable_stack.top();
             variable_stack.pop();
-            set<string> adjacent_colors;
-            set<string> adjacent_variables;
-            for (auto const &entry : graph_built) {
-                if (graph.at(entry.first).find(node) != graph.at(entry.first).end()) {
-                    if (is_register(entry.first)) {
-                        adjacent_colors.insert(entry.first);
+            if (!is_register(node)) {
+                adjacent_colors.clear();
+                for (auto const &entry : graph.at(node)) {
+                    if (is_register(entry)) {
+                        adjacent_colors.insert(entry);
                     } else {
-                        adjacent_colors.insert(reg_map[entry.first]);
+                        if (reg_map.find(entry) != reg_map.end()) {
+                            adjacent_colors.insert(reg_map[entry]);
+                        }
                     }
-                    adjacent_variables.insert(entry.first);
                 }
-            }
-            if ((is_register(node) && adjacent_colors.find(node) != adjacent_colors.end()) || adjacent_colors.size() >= k) {
-                return false;
-            } else {
-                if (!is_register(node)) {
+                if (adjacent_colors.size() < k) {
                     for (auto const &reg : ordered_registers) {
                         if (adjacent_colors.find(reg) == adjacent_colors.end()) {
                             reg_map[node] = reg;
                             break;
                         }
                     }
-                }
-                graph_built[node] = adjacent_variables;
-                for (auto const &variable : adjacent_variables) {
-                    graph_built[variable].insert(node);
+                } else {
+                    spill.insert(node);
                 }
             }
         }
-        return true;
     }
 
     struct cmp {
@@ -82,14 +77,6 @@ namespace L2 {
             variable_stack.push(ordered_graph[i].first);
         }
 
-        map<string, set<string>> graph_built;
-        if (!rebuild_graph(graph, graph_built, reg_map, variable_stack)) {
-            reg_map.clear();
-            for (auto const &entry : graph) {
-                if (!is_register(entry.first)) {
-                    spill.insert(entry.first);
-                }
-            }
-        }
+        rebuild_graph(graph, reg_map, variable_stack, spill);
     }
 }
