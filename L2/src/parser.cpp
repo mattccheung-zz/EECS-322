@@ -156,6 +156,8 @@ namespace L2 {
 
     struct inst_start : pegtl::one<'('> {};
 
+    struct inst_end : pegtl::one<')'> {};
+
     struct goto_label : label {};
 
     struct instruction :
@@ -192,7 +194,7 @@ namespace L2 {
                     >
                 >,
                 seps,
-                pegtl::one<')'>
+                inst_end
             >
         > {};
 
@@ -341,6 +343,18 @@ namespace L2 {
     struct action<inst_start> {
         static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.push_back(new Instruction());
+        }
+    };
+
+    template<>
+    struct action<inst_end> {
+        static void apply(const pegtl::input &in, Program &p) {
+            Instruction *inst = p.functions.back()->instructions.back();
+            if (inst->operators.size() == 1 && inst->operators[0] == Operator_Type::MOVQ) {
+                while (inst->operands.size() > 2) {
+                    inst->operands.pop_back();
+                }
+            }
         }
     };
 

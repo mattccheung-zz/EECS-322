@@ -9,8 +9,8 @@
         (rsi <- 401)
         (call allocate 2)
         ((mem VarArrayAddr 16) <- rax)
-        ((mem rsp -8) <- :ret)
         (rdi <- VarArrayAddr)
+        ((mem rsp -8) <- :ret)
         (call :print_array 1)
         :ret
         (return)
