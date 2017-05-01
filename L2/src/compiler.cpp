@@ -104,13 +104,12 @@ ostream &operator<<(ostream &os, const Program &p) {
 
 
 void remove_stack_arg(Program &p) {
-    int64_t locals;
     for (auto const &f : p.functions) {
-        locals = f->locals;
         for (auto const &inst : f->instructions) {
-            if (inst->operators.size() == 2 && inst->operators[2] == Operator_Type::STACK_ARG) {
+            if (inst->operators.size() == 2 && inst->operators[1] == Operator_Type::STACK_ARG) {
                 inst->operators[1] = Operator_Type::MEM;
-                inst->operands[1] = to_string(stoll(inst->operands[1]) + locals * 8);
+                inst->operands.push_back(to_string(stoll(inst->operands[1]) + f->locals * 8));
+                inst->operands[1] = "rsp";
             }
         }
     }
@@ -153,6 +152,7 @@ int main(int argc, char **argv) {
         } while (!spill_set.empty());
     }
 
+    remove_stack_arg(p);
     output << p << endl;
 
     output.close();
