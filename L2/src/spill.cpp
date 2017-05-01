@@ -19,31 +19,42 @@ namespace L2 {
     }
 
     void transform_instruction(Function *func, const Instruction *inst, const string &sp, int64_t &index) {
-        bool flag = false;
+        int matched_num = 0;
         Instruction *nInst = new Instruction;
         for (auto const &op : inst->operands) {
             if (op == sp) {
-                flag = true;
-                break;
+                matched_num++;
             }
         }
-        if (flag) {
-            string nv = sp + to_string(++index);
-            Instruction *preInst = new Instruction, *postInst = new Instruction, *midInst = new Instruction;
-            preInst->operators = {Operator_Type::MOVQ, Operator_Type::MEM};
-            preInst->operands = {nv, "rsp", "0"};
-            postInst->operators = {Operator_Type::MEM, Operator_Type::MOVQ};
-            postInst->operands = {"rsp", "0", nv};
-            midInst->operators = inst->operators;
-            midInst->operands = inst->operands;
-            for (int i = 0; i < midInst->operands.size(); i++) {
-                if (midInst->operands[i] == sp) {
-                    midInst->operands[i] = nv;
+        if (matched_num > 0) {
+            if (matched_num == 1 && inst->operators.size() == 1 && (inst->operators[0] == Operator_Type::MOVQ ||
+                    inst->operators[0] == Operator_Type::ADDQ|| inst->operators[0] == Operator_Type::SUBQ)) {
+                if (inst->operands[0] == sp) {
+                    nInst->operators = {Operator_Type::MEM, inst->operators[0]};
+                    nInst->operands = {"rsp", "0", inst->operands[1]};
+                } else {
+                    nInst->operators = {inst->operators[0], Operator_Type::MEM};
+                    nInst->operands = {inst->operands[0], "rsp", "0"};
                 }
+                func->instructions.push_back(nInst);
+            } else {
+                string nv = sp + to_string(++index);
+                Instruction *preInst = new Instruction, *postInst = new Instruction, *midInst = new Instruction;
+                preInst->operators = {Operator_Type::MOVQ, Operator_Type::MEM};
+                preInst->operands = {nv, "rsp", "0"};
+                postInst->operators = {Operator_Type::MEM, Operator_Type::MOVQ};
+                postInst->operands = {"rsp", "0", nv};
+                midInst->operators = inst->operators;
+                midInst->operands = inst->operands;
+                for (int i = 0; i < midInst->operands.size(); i++) {
+                    if (midInst->operands[i] == sp) {
+                        midInst->operands[i] = nv;
+                    }
+                }
+                func->instructions.push_back(preInst);
+                func->instructions.push_back(midInst);
+                func->instructions.push_back(postInst);
             }
-            func->instructions.push_back(preInst);
-            func->instructions.push_back(midInst);
-            func->instructions.push_back(postInst);
         } else {
             nInst->operands = inst->operands;
             nInst->operators = inst->operators;
