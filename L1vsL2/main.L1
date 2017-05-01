@@ -24,6 +24,8 @@
         (rdx <- (mem rdi 0))
         (rcx <- 0)
         :loop_start
+        (cjump rcx < rdx :next :loop_end)
+        :next
         (rsi <- rcx)
         ((mem rsp 24) <- rdi)
         ((mem rsp 16) <- rsi)
@@ -37,7 +39,7 @@
         (rsi <- (mem rsp 16))
         (rdi <- (mem rsp 24))
         (rcx++)
-        (cjump rcx < rdx :loop_start :loop_end)
+        (goto :loop_start)
         :loop_end
         (rax <- 1)
         (return)
