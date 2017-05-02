@@ -36,10 +36,10 @@ namespace L2 {
         live_analysis(f, gen, kill, in, out);
 
         map<string, set<string>> graph;
-        for (set<string>::iterator itr = registers.begin(); itr != registers.end(); itr++) {
+        for (auto const &reg : registers) {
             set<string> s = registers;
-            s.erase(*itr);
-            graph[*itr] = s;
+            s.erase(reg);
+            graph[reg] = s;
         }
 
         for (int i = 0; i < in.size(); i++) {
@@ -52,27 +52,27 @@ namespace L2 {
         }
 
         for (int i = 0; i < kill.size(); i++) {
-            Instruction *instruction = f->instructions[i];
-            for (set<string>::iterator itk = kill[i].begin(); itk != kill[i].end(); itk++) {
-                for (set<string>::iterator ito = out[i].begin(); ito != out[i].end(); ito++) {
-                    if (instruction->operators.size() == 1 && instruction->operators.front() == Operator_Type::MOVQ &&
-                            *itk == instruction->operands[0] && *ito == instruction->operands[1]) {
+            Instruction *inst = f->instructions[i];
+            for (auto const &k : kill[i]) {
+                for (auto const &o : out[i]) {
+                    if (inst->operators.size() == 1 && inst->operators.front() == Operator_Type::MOVQ &&
+                        k == inst->operands[0] && o == inst->operands[1]) {
                         continue;
                     } else {
-                        add_into_graph(graph, *itk, *ito);
+                        add_into_graph(graph, k, o);
                     }
                 }
             }
         }
 
         for (int i = 0; i < kill.size(); i++) {
-            Instruction *instruction = f->instructions[i];
-            if ((instruction->operators[0] == Operator_Type::SALQ || instruction->operators[0] == Operator_Type::SARQ) &&
-                    !isNumber(instruction->operands[1])) {
+            Instruction *inst = f->instructions[i];
+            if ((inst->operators[0] == Operator_Type::SALQ || inst->operators[0] == Operator_Type::SARQ) &&
+                    !isNumber(inst->operands[1])) {
                 set<string> s = registers;
                 s.erase("rcx");
-                for (set<string>::iterator it = s.begin(); it != s.end(); it++) {
-                    add_into_graph(graph, instruction->operands[1], *it);
+                for (auto const &reg : s) {
+                    add_into_graph(graph, inst->operands[1], reg);
                 }
             }
         }
