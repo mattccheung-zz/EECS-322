@@ -18,7 +18,7 @@ namespace L2 {
     const set<string> registers(ordered_registers.begin(), ordered_registers.end());
 
     inline bool is_register(const string &s) {
-        return registers.find(s) != registers.end();
+        return s == "rsp" || registers.find(s) != registers.end();
     }
 
     void rebuild_graph(const map<string, set<string>> &graph, map<string, string> &reg_map,
