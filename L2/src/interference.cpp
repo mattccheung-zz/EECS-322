@@ -31,6 +31,17 @@ namespace L2 {
         }
     }
 
+    void add_sets_into_graph(map<string, set<string>> &graph, const vector<set<string>> s) {
+        for (int i = 0; i < s.size(); i++) {
+            vector<string> v(s[i].begin(), s[i].end());
+            for (int j = 0; j < (int)v.size() - 1; j++) {
+                for (int k = j + 1; k < v.size(); k++) {
+                    add_into_graph(graph, v[j], v[k]);
+                }
+            }
+        }
+    }
+
     map<string, set<string>> compute_interference_graph(Function *f) {
         vector<set<string>> gen, kill, in, out;
         live_analysis(f, gen, kill, in, out);
@@ -42,14 +53,8 @@ namespace L2 {
             graph[reg] = s;
         }
 
-        for (int i = 0; i < in.size(); i++) {
-            vector<string> v(in[i].begin(), in[i].end());
-            for (int j = 0; j < v.size() - 1; j++) {
-                for (int k = j + 1; k < v.size(); k++) {
-                    add_into_graph(graph, v[j], v[k]);
-                }
-            }
-        }
+        add_sets_into_graph(graph, in);
+        add_sets_into_graph(graph, out);
 
         for (int i = 0; i < kill.size(); i++) {
             Instruction *inst = f->instructions[i];

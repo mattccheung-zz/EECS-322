@@ -102,7 +102,7 @@ namespace L2 {
                     break;
                 case Operator_Type::INC:
                 case Operator_Type::DEC:
-                    insert_var(kill[i], inst->operands[0]);
+                    insert_var(gen[i], inst->operands[0]);
                     insert_var(kill[i], inst->operands[0]);
                     break;
                 default:
