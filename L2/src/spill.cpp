@@ -39,9 +39,13 @@ namespace L2 {
                 func->instructions.push_back(nInst);
             } else {
                 string nv = sp + to_string(++index);
-                Instruction *preInst = new Instruction, *postInst = new Instruction, *midInst = new Instruction;
-                preInst->operators = {Operator_Type::MOVQ, Operator_Type::MEM};
-                preInst->operands = {nv, "rsp", "0"};
+                if (!(matched_num == 1 && inst->operators[0] == Operator_Type::MOVQ && inst->operands[0] == sp)) {
+                    Instruction *preInst = new Instruction;
+                    preInst->operators = {Operator_Type::MOVQ, Operator_Type::MEM};
+                    preInst->operands = {nv, "rsp", "0"};
+                    func->instructions.push_back(preInst);
+                }
+                Instruction *midInst = new Instruction;
                 midInst->operators = inst->operators;
                 midInst->operands = inst->operands;
                 for (int i = 0; i < midInst->operands.size(); i++) {
@@ -49,7 +53,6 @@ namespace L2 {
                         midInst->operands[i] = nv;
                     }
                 }
-                func->instructions.push_back(preInst);
                 func->instructions.push_back(midInst);
                 if (inst->operands[0] == sp && inst->operators[0] != Operator_Type::MEM) {
                     Instruction *postInst = new Instruction;
