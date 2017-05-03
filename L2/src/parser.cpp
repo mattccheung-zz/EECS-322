@@ -20,6 +20,10 @@ using namespace std;
 
 namespace L2 {
 
+#ifdef DEBUG
+    int debug_line_number;
+#endif
+
     struct variable :
         pegtl::seq<
             pegtl::plus<pegtl::sor<pegtl::alpha, pegtl::one<'_'>>>,
@@ -253,6 +257,10 @@ namespace L2 {
     template<>
     struct action<function_name> {
         static void apply(const pegtl::input &in, Program &p) {
+#ifdef DEBUG
+            debug_line_number = 0;
+            cout << in.string() << endl;
+#endif
             Function *newF = new Function();
             newF->name = in.string();
             p.functions.push_back(newF);
@@ -332,6 +340,9 @@ namespace L2 {
     template<>
     struct action<inst_label> {
         static void apply(const pegtl::input &in, Program &p) {
+#ifdef DEBUG
+            cout << (++debug_line_number) << "\t" << in.string() << endl;
+#endif
             Instruction *newI = new Instruction();
             newI->operators.push_back(Operator_Type::LABEL);
             newI->operands.push_back(in.string());
@@ -342,6 +353,9 @@ namespace L2 {
     template<>
     struct action<inst_start> {
         static void apply(const pegtl::input &in, Program &p) {
+#ifdef DEBUG
+            cout << (++debug_line_number) << "\t" << in.string() << endl;
+#endif
             p.functions.back()->instructions.push_back(new Instruction());
         }
     };
