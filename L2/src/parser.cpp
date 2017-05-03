@@ -152,6 +152,12 @@ namespace L2 {
 
     struct inst_call : pegtl::string<'c', 'a', 'l', 'l'> {};
 
+    struct inst_print : pegtl::string<'p', 'r', 'i', 'n', 't'> {};
+
+    struct inst_allocate : pegtl::string<'a', 'l', 'l', 'o', 'c', 'a', 't', 'e'> {};
+
+    struct inst_array_error : pegtl::string<'a', 'r', 'r', 'a', 'y', '-', 'e', 'r', 'r', 'o', 'r'> {};
+
     struct inst_cjump_label : label{};
 
     struct inst_call_number : number {};
@@ -181,7 +187,7 @@ namespace L2 {
                     pegtl::seq<inst_cjump, seps, t, seps, operator_cmp, seps, t, seps, inst_cjump_label, seps, inst_cjump_label>,
                     pegtl::seq<inst_goto, seps, goto_label>,
                     inst_return,
-                    pegtl::seq<inst_call, seps, u, seps, inst_call_number>,
+                    pegtl::seq<inst_call, seps, pegtl::sor<inst_print, inst_array_error, inst_allocate, u>, seps, inst_call_number>,
                     pegtl::seq<
                         w, seps,
                             pegtl::sor<
@@ -502,6 +508,27 @@ namespace L2 {
     struct action<inst_call> {
         static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.back()->operators.push_back(Operator_Type::CALL);
+        }
+    };
+
+    template<>
+    struct action<inst_print> {
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operands.push_back(in.string());
+        }
+    };
+
+    template<>
+    struct action<inst_array_error> {
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operands.push_back(in.string());
+        }
+    };
+
+    template<>
+    struct action<inst_allocate> {
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operands.push_back(in.string());
         }
     };
 
