@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     bool verbose;
 
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " SOURCE [-v]" << std::endl;
+        cerr << "Usage: " << argv[0] << " SOURCE [-v]" << endl;
         return 1;
     }
     int32_t opt;
@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
                 verbose = true;
                 break;
             default:
-                std::cerr << "Usage: " << argv[0] << "[-v] SOURCE" << std::endl;
+                cerr << "Usage: " << argv[0] << "[-v] SOURCE" << endl;
                 return 1;
         }
     }
