@@ -6,9 +6,11 @@
 #include <pegtl/analyze.hh>
 #include <pegtl/contrib/raw_string.hh>
 
-using namespace pegtl;
+namespace L3 {
+    using namespace pegtl;
+    using pegtl::plus;
 
-namespace L2 {
+
     struct p;
     struct f;
     struct i;
@@ -60,4 +62,11 @@ namespace L2 {
     struct label : seq<one<':'>, var> {};
     struct var : seq<plus<sor<alpha, one<'_'>>>, star<sor<alpha, one<'_'>, digit>>> {};
     struct N : seq<opt<sor<pegtl::one<'-'>, pegtl::one<'+'>>>, plus<pegtl::digit>> {};
+
+
+    Program L3ParseFile(char *fileName) {
+        Program p;
+        return p;
+    }
+
 }
