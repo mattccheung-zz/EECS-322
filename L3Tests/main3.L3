@@ -1,0 +1,87 @@
+define :main() {
+    array = call :fibonacci(0)
+    call :printArray(array)
+    array = call :fibonacci(1)
+    call :printArray(array)
+    array = call :fibonacci(2)
+    call :printArray(array)
+    array = call :fibonacci(3)
+    call :printArray(array)
+    array = call :fibonacci(5)
+    call :printArray(array)
+}
+
+
+define :fibonacci(n) {
+    tmp <- n > 0
+    br tmp :positive :not_positive
+    :not_positive
+    return 0
+    :positive
+    array <- call allocate(n, 0)
+    tmp <- array + 8
+    store tmp <- 1
+    tmp <- n = 1
+    br tmp :exit :not_one
+    :not_one
+    tmp <- array + 16
+    store tmp <- 3
+    tmp <- n = 2
+    br tmp :exit :not_two
+    :not_two
+    index <- 3
+    :loop_start
+    tmp index <= n
+    br tmp :loop_next :exit
+    :loop_next
+    p <- index - 2
+    p <- p << 3
+    p <- array + p
+    q <- p + 8
+    p <- load p
+    q <- load q
+    tmp <- p + q
+    call :store_in_array(array, index, tmp)
+    index <- index + 1
+    br :loop_start
+    :exit
+    return array
+}
+
+define :store_in_array(array, i, n) {
+    addr <- i + 1
+    addr <- idx << 3
+    addr <- array + addr
+    tmp <- n & 1
+    tmp <- tmp = 0
+    br tmp :is_array :not_array
+    :not_array
+    n <- n << 1
+    n <- n + 1
+    :is_array
+    store addr n
+    return
+}
+
+define :printArray(array) {
+    tmp <- array & 1
+    tmp <- tmp = 0
+    br tmp :is_array :not_array
+    :is_array
+    index <- 1
+    length <- load array
+    :loop_start
+    tmp <- index <= length
+    br tmp :loop_next :loop_end
+    :loop_next
+    tmp <- index << 3
+    tmp <- array + tmp
+    tmp <- load tmp
+    call print(tmp)
+    index <- index + 1
+    br :loop_start
+    :loop_end
+    :not_array
+    return 0
+}
+
