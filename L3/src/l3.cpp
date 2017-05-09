@@ -147,7 +147,7 @@ namespace L3 {
         vector <string> l2;
         stringstream ss;
         if (var.length() != 0) {
-            ss << "(rax <-" << var;
+            ss << "(rax <- " << var << ")";
             l2.push_back(ss.str());
             ss.str(string());
         }
