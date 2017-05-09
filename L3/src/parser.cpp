@@ -10,6 +10,7 @@
 namespace L3 {
     using namespace pegtl;
     using pegtl::plus;
+    using pegtl::string;
 
 #ifdef DEBUG
     int n = 0;
