@@ -194,6 +194,8 @@ namespace L3 {
         vector<Instruction *> instructions;
 
         ~Function();
+
+        vector<TreeNode *> getInstTrees();
     };
 
     struct Program {

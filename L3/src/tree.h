@@ -10,9 +10,13 @@ struct TreeNode;
 
 struct TreeNode {
     string value;
-    vector<TreeNode *> children;
+    TreeNode *firstChild;
+    TreeNode *nextSibling;
 
     TreeNode(const string &v) {
         value = v;
+        firstChild = NULL;
+        nextSibling = NULL;
     }
 };
+
