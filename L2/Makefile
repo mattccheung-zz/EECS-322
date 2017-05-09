@@ -1,7 +1,7 @@
 CPP_FILES := $(wildcard src/*.cpp)
 OBJ_FILES := $(addprefix obj/,$(notdir $(CPP_FILES:.cpp=.o)))
 CC_FLAGS  := --std=c++11 -I./src -I../lib/PEGTL -g3
-LD_FLAGS  := 
+LD_FLAGS  :=
 CC        := g++
 
 all: dirs L2

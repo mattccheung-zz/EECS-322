@@ -20,6 +20,10 @@ using namespace std;
 
 namespace L2 {
 
+#ifdef DEBUG
+    int debug_line_number;
+#endif
+
     struct variable :
         pegtl::seq<
             pegtl::plus<pegtl::sor<pegtl::alpha, pegtl::one<'_'>>>,
@@ -148,6 +152,12 @@ namespace L2 {
 
     struct inst_call : pegtl::string<'c', 'a', 'l', 'l'> {};
 
+    struct inst_print : pegtl::string<'p', 'r', 'i', 'n', 't'> {};
+
+    struct inst_allocate : pegtl::string<'a', 'l', 'l', 'o', 'c', 'a', 't', 'e'> {};
+
+    struct inst_array_error : pegtl::string<'a', 'r', 'r', 'a', 'y', '-', 'e', 'r', 'r', 'o', 'r'> {};
+
     struct inst_cjump_label : label{};
 
     struct inst_call_number : number {};
@@ -177,7 +187,7 @@ namespace L2 {
                     pegtl::seq<inst_cjump, seps, t, seps, operator_cmp, seps, t, seps, inst_cjump_label, seps, inst_cjump_label>,
                     pegtl::seq<inst_goto, seps, goto_label>,
                     inst_return,
-                    pegtl::seq<inst_call, seps, u, seps, inst_call_number>,
+                    pegtl::seq<inst_call, seps, pegtl::sor<inst_print, inst_array_error, inst_allocate, u>, seps, inst_call_number>,
                     pegtl::seq<
                         w, seps,
                             pegtl::sor<
@@ -253,6 +263,10 @@ namespace L2 {
     template<>
     struct action<function_name> {
         static void apply(const pegtl::input &in, Program &p) {
+#ifdef DEBUG
+            debug_line_number = 0;
+            cout << in.string() << endl;
+#endif
             Function *newF = new Function();
             newF->name = in.string();
             p.functions.push_back(newF);
@@ -332,6 +346,9 @@ namespace L2 {
     template<>
     struct action<inst_label> {
         static void apply(const pegtl::input &in, Program &p) {
+#ifdef DEBUG
+            cout << (++debug_line_number) << "\t" << in.string() << endl;
+#endif
             Instruction *newI = new Instruction();
             newI->operators.push_back(Operator_Type::LABEL);
             newI->operands.push_back(in.string());
@@ -342,6 +359,9 @@ namespace L2 {
     template<>
     struct action<inst_start> {
         static void apply(const pegtl::input &in, Program &p) {
+#ifdef DEBUG
+            cout << (++debug_line_number) << "\t" << in.string() << endl;
+#endif
             p.functions.back()->instructions.push_back(new Instruction());
         }
     };
@@ -488,6 +508,27 @@ namespace L2 {
     struct action<inst_call> {
         static void apply(const pegtl::input &in, Program &p) {
             p.functions.back()->instructions.back()->operators.push_back(Operator_Type::CALL);
+        }
+    };
+
+    template<>
+    struct action<inst_print> {
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operands.push_back(in.string());
+        }
+    };
+
+    template<>
+    struct action<inst_array_error> {
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operands.push_back(in.string());
+        }
+    };
+
+    template<>
+    struct action<inst_allocate> {
+        static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operands.push_back(in.string());
         }
     };
 

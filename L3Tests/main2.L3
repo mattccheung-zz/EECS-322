@@ -1,0 +1,83 @@
+define :main() {
+    array <- call allocate (11, 1)
+    length <- load array
+    index <- 1
+    :loop_start
+    flag <- index <= length
+    br flag :loop_next :loop_end
+    :loop_next
+    tmp <- index << 3
+    tmp <- array + tmp
+    v <- length - index
+    v <- v << 1
+    v <- v + 1
+    store tmp <- v
+    index <- index + 1
+    :loop_end
+    call :printArray(array)
+    call :sortArray(array)
+    call :printArray(array)
+    return
+}
+
+
+define :sortArray(array) {
+    tmp <- array & 1
+    tmp <- tmp = 0
+    br tmp :is_array :not_array
+    :is_array
+    length <- load array
+    j <- length
+    :outside_loop_start
+    tmp <- j > 1
+    br tmp :outside_loop_next :outside_loop_end
+    :outside_loop_next
+    i = 0
+    :inside_loop_start
+    tmp <- i < j
+    br tmp :inside_loop_next :inside_loop_end
+    :inside_loop_next
+    left <- i << 8
+    left <- array + left
+    right <- left + 8
+    left_e <- load left
+    right_e <- load right
+    tmp <- left_e > right_e
+    br tmp :swap :do_nothing
+    :swap
+    store left <- right_e
+    store right <- left_e
+    :do_nothing
+    i <- i + 1
+    br :inside_loop_start
+    :inside_loop_end
+    j <- j - 1
+    br :outside_loop_start
+    :outside_loop_end
+    return 1
+    :not_array
+    return 0
+}
+
+
+define :printArray(array) {
+    tmp <- array & 1
+    tmp <- tmp = 0
+    br tmp :is_array :not_array
+    :is_array
+    index <- 1
+    length <- load array
+    :loop_start
+    tmp <- index <= length
+    br tmp :loop_next :loop_end
+    :loop_next
+    tmp <- index << 3
+    tmp <- array + tmp
+    tmp <- load tmp
+    call print(tmp)
+    index <- index + 1
+    br :loop_start
+    :loop_end
+    :not_array
+    return 0
+}

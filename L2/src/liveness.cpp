@@ -87,7 +87,7 @@ namespace L2 {
                             gen[i] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
                             break;
                     }
-                    if (inst->operands[0] != "print" && inst->operands[0] != "allocate" && inst->operands[0] != "array_error") {
+                    if (inst->operands[0] != "print" && inst->operands[0] != "allocate" && inst->operands[0] != "array-error") {
                         insert_var(gen[i], inst->operands[0], false);
                     }
                     break;

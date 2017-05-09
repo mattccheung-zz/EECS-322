@@ -130,18 +130,18 @@ int main(int argc, char **argv) {
                                    << operand;
                         } else if (operand2[0] != 'r') {
                             output << "\tcmpq " << get_opd(operand2) << ", " << get_opd(operand3) << endl;
-                            label = get_low_reg(operand3);
+                            label = get_low_reg(inst->operands[0]);
                             if (inst->operators[1] == L1::Operator_Type::LQ) {
-                                output << "\tsetge ";
-                            } else if (inst->operators[1] == L1::Operator_Type::LEQ) {
                                 output << "\tsetg ";
+                            } else if (inst->operators[1] == L1::Operator_Type::LEQ) {
+                                output << "\tsetge ";
                             } else {
                                 output << "\tsete ";
                             }
                             output << label << endl << "\tmovzbq " << label << ", " << operand;
                         } else {
                             output << "\tcmpq " << get_opd(operand3) << ", " << get_opd(operand2) << endl;
-                            label = get_low_reg(operand2);
+                            label = get_low_reg(inst->operands[0]);
                             if (inst->operators[1] == L1::Operator_Type::LQ) {
                                 output << "\tsetl ";
                             } else if (inst->operators[1] == L1::Operator_Type::LEQ) {

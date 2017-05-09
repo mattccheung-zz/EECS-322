@@ -1,0 +1,51 @@
+define :main() {
+    array1 <- call allocate(5, 201)
+    array2 <- call allocate(7, 401)
+    e <- array1 + 16
+    store e <- array2
+    call :printArray(array1)
+    return
+}
+
+define :printArray(array) {
+    tmp <- array
+    tmp &= 1
+    tmp <- tmp = 0
+    br tmp :is_array :not_array
+    :is_array
+    index <- 0
+    length <- load array
+    :loop_start
+    tmp <- index < length
+    br tmp :loop_next :loop_end
+    :loop_next
+    call :printArrayElement(array, index)
+    index <- index + 1
+    br :loop_start
+    :loop_end
+    return 1
+    :not_array
+    return 0
+}
+
+define :printArrayElement(array, index) {
+    v <- index
+    tmp <- v << 1
+    tmp <- tmp + 1
+    call print(tmp)
+    v <- v << 3
+    v <- v + 8
+    tmp <- v << 1
+    tmp <- tmp + 1
+    call print(tmp)
+    v <- array + v
+    v <- load v
+    tmp <- v = 0
+    br tmp :is_array :not_array
+    :is_array
+    call :printArray(v)
+    return
+    :not_array
+    call print(v)
+    return
+}

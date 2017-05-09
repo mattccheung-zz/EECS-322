@@ -67,13 +67,13 @@ namespace L2 {
         }
         sort(ordered_graph.begin(), ordered_graph.end(), cmp());
         int index = 0;
-        while (ordered_graph[index].second.size() < k) {
+        while (index < ordered_graph.size() && ordered_graph[index].second.size() < k) {
             index++;
         }
-        for (int i = k - 1; i >= 0; i--) {
+        for (int i = index - 1; i >= 0; i--) {
             variable_stack.push(ordered_graph[i].first);
         }
-        for (int i = ordered_graph.size() - 1; i >= k; i--) {
+        for (int i = ordered_graph.size() - 1; i >= index; i--) {
             variable_stack.push(ordered_graph[i].first);
         }
 
