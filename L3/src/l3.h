@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 
+#include "tree.h"
+
 using namespace std;
 
 
@@ -56,6 +58,8 @@ namespace L3 {
         virtual void print(ostream &os) = 0;
 
         virtual vector <string> toL2(string &suffix) = 0;
+
+        virtual TreeNode *getInstTree() = 0;
     };
 
     ostream &operator<<(ostream &os, Instruction &inst);
@@ -68,6 +72,8 @@ namespace L3 {
         void print(ostream &os);
 
         vector <string> toL2(string &suffix);
+
+        TreeNode *getInstTree();
     };
 
     struct AssignOpInst : public Instruction {
@@ -79,6 +85,8 @@ namespace L3 {
         void print(ostream &os);
 
         vector <string> toL2(string &suffix);
+
+        TreeNode *getInstTree();
     };
 
     struct AssignCmpInst : public Instruction {
@@ -90,6 +98,8 @@ namespace L3 {
         void print(ostream &os);
 
         vector <string> toL2(string &suffix);
+
+        TreeNode *getInstTree();
     };
 
     struct LoadInst : public Instruction {
@@ -100,6 +110,8 @@ namespace L3 {
         void print(ostream &os);
 
         vector <string> toL2(string &suffix);
+
+        TreeNode *getInstTree();
     };
 
     struct StoreInst : public Instruction {
@@ -110,6 +122,8 @@ namespace L3 {
         void print(ostream &os);
 
         vector <string> toL2(string &suffix);
+
+        TreeNode *getInstTree();
     };
 
     struct BranchInst : public Instruction {
@@ -120,6 +134,8 @@ namespace L3 {
         void print(ostream &os);
 
         vector <string> toL2(string &suffix);
+
+        TreeNode *getInstTree();
     };
 
     struct LabelInst : public Instruction {
@@ -130,6 +146,8 @@ namespace L3 {
         void print(ostream &os);
 
         vector <string> toL2(string &suffix);
+
+        TreeNode *getInstTree();
     };
 
     struct ReturnInst : public Instruction {
@@ -140,6 +158,8 @@ namespace L3 {
         void print(ostream &os);
 
         vector <string> toL2(string &suffix);
+
+        TreeNode *getInstTree();
     };
 
     struct CallInst : public Instruction {
@@ -151,6 +171,8 @@ namespace L3 {
         void print(ostream &os);
 
         vector <string> toL2(string &suffix);
+
+        TreeNode *getInstTree();
     };
 
     struct AssignCallInst : public Instruction {
@@ -162,6 +184,8 @@ namespace L3 {
         void print(ostream &os);
 
         vector <string> toL2(string &suffix);
+
+        TreeNode *getInstTree();
     };
 
     struct Function {

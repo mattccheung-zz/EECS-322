@@ -31,6 +31,12 @@ namespace L3 {
         return l2;
     }
 
+    TreeNode *AssignInst::getInstTree() {
+        TreeNode *varNode = new TreeNode(var), *sNode = new TreeNode(s);
+        varNode->children.push_back(sNode);
+        return varNode;
+    }
+
 
     AssignOpInst::~AssignOpInst() {}
 
@@ -49,6 +55,14 @@ namespace L3 {
         return l2;
     }
 
+    TreeNode *AssignOpInst::getInstTree() {
+        TreeNode *varNode = new TreeNode(var), *ltNode = new TreeNode(lt), *rtNode = new TreeNode(rt);
+        TreeNode *opNode = new TreeNode(opToString(op));
+        varNode->children = {opNode};
+        opNode->children = {ltNode, rtNode};
+        return varNode;
+    }
+
 
     AssignCmpInst::~AssignCmpInst() {}
 
@@ -62,6 +76,14 @@ namespace L3 {
         ss << "(" << var << " <- " << lt << " " << cmpToString(cmp) << " " << rt << ")";
         l2.push_back(ss.str());
         return l2;
+    }
+
+    TreeNode *AssignCmpInst::getInstTree() {
+        TreeNode *varNode = new TreeNode(var), *ltNode = new TreeNode(lt), *rtNode = new TreeNode(rt);
+        TreeNode *cmpNode = new TreeNode(cmpToString(cmp));
+        varNode->children = {cmpNode};
+        cmpNode->children = {ltNode, rtNode};
+        return varNode;
     }
 
 
@@ -79,6 +101,13 @@ namespace L3 {
         return l2;
     }
 
+    TreeNode *LoadInst::getInstTree() {
+        TreeNode *lvarNode = new TreeNode(lvar), *rvarNode = new TreeNode(rvar), *loadNode = new TreeNode("load");
+        lvarNode->children = {loadNode};
+        loadNode->children = {rvarNode};
+        return lvarNode;
+    }
+
 
     StoreInst::~StoreInst() {}
 
@@ -92,6 +121,12 @@ namespace L3 {
         ss << "((mem " << var << " 0) <- " << s << ")";
         l2.push_back(ss.str());
         return l2;
+    }
+
+    TreeNode *StoreInst::getInstTree() {
+        TreeNode *storeNode = new TreeNode("store"), *varNode = new TreeNode(var), *sNode = new TreeNode(s);
+        storeNode->children = {varNode, sNode};
+        return storeNode;
     }
 
 
@@ -117,6 +152,17 @@ namespace L3 {
         return l2;
     }
 
+    TreeNode *BranchInst::getInstTree() {
+        TreeNode *brNode = new TreeNode("br"), *llNode = new TreeNode(llabel);
+        if (var.length() == 0) {
+            brNode->children = {llNode};
+        } else {
+            TreeNode *varNode = new TreeNode(var), *rlNode = new TreeNode(rlabel);
+            brNode->children = {varNode, llNode, rlNode};
+        }
+        return brNode;
+    }
+
 
     LabelInst::~LabelInst() {}
 
@@ -130,6 +176,10 @@ namespace L3 {
         ss << label;
         l2.push_back(ss.str());
         return l2;
+    }
+
+    TreeNode *LabelInst::getInstTree() {
+        return new TreeNode(label);
     }
 
 
@@ -154,6 +204,15 @@ namespace L3 {
         ss << "(return)";
         l2.push_back(ss.str());
         return l2;
+    }
+
+    TreeNode *ReturnInst::getInstTree() {
+        TreeNode *retNode = new TreeNode("return");
+        if (var.length() != 0) {
+            TreeNode *varNode = new TreeNode(var);
+            retNode->children = {varNode};
+        }
+        return retNode;
     }
 
 
@@ -201,6 +260,15 @@ namespace L3 {
         return l2;
     }
 
+    TreeNode *CallInst::getInstTree() {
+        TreeNode *callNode = new TreeNode("call"), *calleeNode = new TreeNode(callee);
+        callNode->children = {calleeNode};
+        for (auto const &arg : args) {
+            callNode->children.push_back(new TreeNode(arg));
+        }
+        return callNode;
+    }
+
 
     AssignCallInst::~AssignCallInst() {};
 
@@ -246,6 +314,16 @@ namespace L3 {
         ss << "(" << var << " <- rax)";
         l2.push_back(ss.str());
         return l2;
+    }
+
+    TreeNode *AssignCallInst::getInstTree() {
+        TreeNode *varNode = new TreeNode(var), *callNode = new TreeNode("call"), *calleeNode = new TreeNode(callee);
+        varNode->children = {callNode};
+        callNode->children = {calleeNode};
+        for (auto const &arg : args) {
+            callNode->children.push_back(new TreeNode(arg));
+        }
+        return varNode;
     }
 
 
