@@ -209,9 +209,7 @@ namespace L3 {
 
     vector <string> LabelInst::toL2(string &suffix) {
         vector <string> l2;
-        stringstream ss;
-        ss << label;
-        l2.push_back(ss.str());
+        l2.push_back(label);
         return l2;
     }
 
