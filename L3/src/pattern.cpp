@@ -327,7 +327,7 @@ namespace L3 {
                 insts.push_back("(" + root->value + " " + op->value + "= " + r->value + ")");
             }
         } else if (movCmpMatch(root)) {
-            TreeNode *cmp = root->firstChild, *l = op->firstChild, *r = l->nextSibling;
+            TreeNode *cmp = root->firstChild, *l = cmp->firstChild, *r = l->nextSibling;
             getInstFromTree(insts, l);
             getInstFromTree(insts, r);
             insts.push_back("(" + root->value + " <- " + l->value + " " + cmp->value + " " + r->value + ")");
