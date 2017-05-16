@@ -1,4 +1,4 @@
-all: L1_lang L2_lang L3_lang 
+all: L1_lang L2_lang L3_lang IR_lang LA_lang LB_lang
 
 L1_lang:
 	cd L1 ; make 
@@ -9,6 +9,15 @@ L2_lang:
 L3_lang:
 	cd L3 ; make
 
+IR_lang:
+	cd IR ; make
+
+LA_lang:
+	cd LA ; make
+
+LB_lang:
+	cd LB ; make
+
 framework:
 	./scripts/framework.sh
 
@@ -16,4 +25,4 @@ homework:
 	./scripts/homework.sh
 
 clean:
-	rm -f *.bz2 ; cd L1 ; make clean ; cd ../L2 ; make clean ; cd ../L3 ; make clean ; cd ../IR ; make clean ; 
+	rm -f *.bz2 ; cd L1 ; make clean ; cd ../L2 ; make clean ; cd ../L3 ; make clean ; cd ../IR ; make clean ; cd ../LA ; make clean ; cd ../LB ; make clean ; 

@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <stack>
 
 #include "l3.h"
 
@@ -10,6 +11,37 @@ using namespace std;
 namespace L3 {
 
     vector <string> argReg = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+
+    TreeNode *mergeTwoTree(TreeNode *up, TreeNode *down) {
+        /*
+         * This is a depth-first-search algorithm.
+         * It will search leaf node of the up side tree, and tries to match the root node
+         * of down side tree. If matched, it will delete the root of down tree, and link
+         * down tree to the up tree, then return.
+         *
+         * It will just match once, even though it is possible to have multiple shared
+         * variables in the same instruction.
+         * */
+        stack<TreeNode *> st;
+        st.push(up);
+        while (!st.empty()) {
+            TreeNode *node = st.top();
+            st.pop();
+            if (node->nextSibling != NULL) {
+                st.push(node->nextSibling);
+            }
+            if (node->firstChild != NULL) {
+                st.push(node->firstChild);
+            } else {
+                if (node->value == down->value) {
+                    node->firstChild = down->firstChild;
+                    delete down;
+                    return up;
+                }
+            }
+        }
+        return NULL;
+    }
 
     ostream &operator<<(ostream &os, Instruction &inst) {
         inst.print(os);
@@ -31,6 +63,12 @@ namespace L3 {
         return l2;
     }
 
+    TreeNode *AssignInst::getInstTree() {
+        TreeNode *varNode = new TreeNode(var), *sNode = new TreeNode(s);
+        varNode->firstChild = sNode;
+        return varNode;
+    }
+
 
     AssignOpInst::~AssignOpInst() {}
 
@@ -49,6 +87,15 @@ namespace L3 {
         return l2;
     }
 
+    TreeNode *AssignOpInst::getInstTree() {
+        TreeNode *varNode = new TreeNode(var), *ltNode = new TreeNode(lt), *rtNode = new TreeNode(rt);
+        TreeNode *opNode = new TreeNode(opToString(op));
+        varNode->firstChild = opNode;
+        opNode->firstChild = ltNode;
+        ltNode->nextSibling = rtNode;
+        return varNode;
+    }
+
 
     AssignCmpInst::~AssignCmpInst() {}
 
@@ -62,6 +109,15 @@ namespace L3 {
         ss << "(" << var << " <- " << lt << " " << cmpToString(cmp) << " " << rt << ")";
         l2.push_back(ss.str());
         return l2;
+    }
+
+    TreeNode *AssignCmpInst::getInstTree() {
+        TreeNode *varNode = new TreeNode(var), *ltNode = new TreeNode(lt), *rtNode = new TreeNode(rt);
+        TreeNode *cmpNode = new TreeNode(cmpToString(cmp));
+        varNode->firstChild = cmpNode;
+        cmpNode->firstChild = ltNode;
+        ltNode->nextSibling = rtNode;
+        return varNode;
     }
 
 
@@ -79,6 +135,13 @@ namespace L3 {
         return l2;
     }
 
+    TreeNode *LoadInst::getInstTree() {
+        TreeNode *lvarNode = new TreeNode(lvar), *rvarNode = new TreeNode(rvar), *loadNode = new TreeNode("load");
+        lvarNode->firstChild = loadNode;
+        loadNode->firstChild = rvarNode;
+        return lvarNode;
+    }
+
 
     StoreInst::~StoreInst() {}
 
@@ -92,6 +155,13 @@ namespace L3 {
         ss << "((mem " << var << " 0) <- " << s << ")";
         l2.push_back(ss.str());
         return l2;
+    }
+
+    TreeNode *StoreInst::getInstTree() {
+        TreeNode *storeNode = new TreeNode("store"), *varNode = new TreeNode(var), *sNode = new TreeNode(s);
+        storeNode->firstChild = varNode;
+        varNode->nextSibling = sNode;
+        return storeNode;
     }
 
 
@@ -117,6 +187,19 @@ namespace L3 {
         return l2;
     }
 
+    TreeNode *BranchInst::getInstTree() {
+        TreeNode *brNode = new TreeNode("br"), *llNode = new TreeNode(llabel);
+        if (var.length() == 0) {
+            brNode->firstChild = llNode;
+        } else {
+            TreeNode *varNode = new TreeNode(var), *rlNode = new TreeNode(rlabel);
+            brNode->firstChild = varNode;
+            varNode->nextSibling = llNode;
+            llNode->nextSibling = rlNode;
+        }
+        return brNode;
+    }
+
 
     LabelInst::~LabelInst() {}
 
@@ -126,10 +209,12 @@ namespace L3 {
 
     vector <string> LabelInst::toL2(string &suffix) {
         vector <string> l2;
-        stringstream ss;
-        ss << label;
-        l2.push_back(ss.str());
+        l2.push_back(label);
         return l2;
+    }
+
+    TreeNode *LabelInst::getInstTree() {
+        return new TreeNode(label);
     }
 
 
@@ -154,6 +239,14 @@ namespace L3 {
         ss << "(return)";
         l2.push_back(ss.str());
         return l2;
+    }
+
+    TreeNode *ReturnInst::getInstTree() {
+        TreeNode *retNode = new TreeNode("return");
+        if (var.length() != 0) {
+            retNode->firstChild = new TreeNode(var);
+        }
+        return retNode;
     }
 
 
@@ -199,6 +292,17 @@ namespace L3 {
             ss.str(string());
         }
         return l2;
+    }
+
+    TreeNode *CallInst::getInstTree() {
+        TreeNode *callNode = new TreeNode("call"), *calleeNode = new TreeNode(callee);
+        callNode->firstChild = calleeNode;
+        TreeNode *prevNode = calleeNode;
+        for (auto const &arg : args) {
+            prevNode->nextSibling = new TreeNode(arg);
+            prevNode = prevNode->nextSibling;
+        }
+        return callNode;
     }
 
 
@@ -248,11 +352,41 @@ namespace L3 {
         return l2;
     }
 
+    TreeNode *AssignCallInst::getInstTree() {
+        TreeNode *varNode = new TreeNode(var), *callNode = new TreeNode("call"), *calleeNode = new TreeNode(callee);
+        varNode->firstChild = callNode;
+        callNode->firstChild = calleeNode;
+        TreeNode *prevNode = calleeNode;
+        for (auto const &arg : args) {
+            prevNode->nextSibling = new TreeNode(arg);
+            prevNode = prevNode->nextSibling;
+        }
+        return varNode;
+    }
+
 
     Function::~Function() {
         for (auto const &i : instructions) {
             delete i;
         }
+    }
+
+    vector<TreeNode *> Function::getInstTrees() {
+        vector<TreeNode *> trees;
+        TreeNode *mergedTree = NULL;
+        TreeNode *prevTree = instructions[0]->getInstTree();
+        for (int i = 1; i < instructions.size(); i++) {
+            TreeNode *currTree = instructions[i]->getInstTree();
+            mergedTree = mergeTwoTree(currTree, prevTree);
+            if (mergedTree == NULL) {
+                trees.push_back(prevTree);
+                prevTree = currTree;
+            } else {
+                prevTree = mergedTree;
+            }
+        }
+        trees.push_back(mergedTree == NULL ? prevTree : mergedTree);
+        return trees;
     }
 
 

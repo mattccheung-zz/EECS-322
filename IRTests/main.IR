@@ -1,0 +1,50 @@
+define int64 main(int64[][][] %A, int64 %v) {
+	:entry
+    int64 %i
+    int64 %j
+    int64 %k
+    int64 %len1
+    int64 %len2
+    int64 %len3
+    int64 %tmpRes1
+    int64 %tmpRes2
+    int64 %tmpRes3
+    int64 %tmpRes4
+    :program_body
+    %i <- 0
+    %j <- 0
+    %k <- 0
+    %len1 <- length %A 0
+    %len1 = %len1 >> 1
+    %len2 <- length %A 1
+    %len2 = %len2 >> 1
+    %len3 <- length %A 2
+    %len3 = %len3 >> 1
+    :loop1_start
+    %tmpRes1 <- %i < %len1
+    br %tmpRes1 :loop2_start :loop1_end
+    :loop2_start
+    %tmpRes2 <- %j < %len2
+    br %tmpRes2 :loop3_start :loop2_end
+    :loop3_start
+    %tmpRes3 <- %k < %len3
+    br %tmpRes3 :loop_body :loop3_end
+    :loop_body
+    %tmpRes4 <- %A[%i][%j][%k] = %v
+    br %tmpRes4 :returnTrue :continue
+    :continue
+    %k <- %k + 1
+    br :loop3_start
+    :loop3_end
+    %k <- 0
+    %j <- %j + 1
+    br :loop2_start
+    :loop2_end
+    %j <- 0
+    %i <- %i + 1
+    br :loop1_start
+    :loop1_end
+    return 1
+    :returnTrue
+    return 3
+}
