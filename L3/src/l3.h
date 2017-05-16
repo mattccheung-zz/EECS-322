@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <string>
-#include <iostream>
 
 using namespace std;
 
@@ -52,142 +51,117 @@ namespace L3 {
     }
 
     struct Instruction {
+        virtual ~Instruction() {};
+
         virtual void print(ostream &os) = 0;
 
-        virtual ~Instruction() {};
+        virtual vector <string> toL2(string &suffix) = 0;
     };
 
-    inline ostream &operator<<(ostream &os, Instruction &inst) {
-        inst.print(os);
-        return os;
-    }
+    ostream &operator<<(ostream &os, Instruction &inst);
 
     struct AssignInst : public Instruction {
         string var, s;
 
-        ~AssignInst() {};
+        ~AssignInst();
 
-        void print(ostream &os) {
-            os << var << " <- " << s;
-        }
+        void print(ostream &os);
+
+        vector <string> toL2(string &suffix);
     };
 
     struct AssignOpInst : public Instruction {
         string var, lt, rt;
         OP op;
 
-        ~AssignOpInst() {};
+        ~AssignOpInst();
 
-        void print(ostream &os) {
-            os << var << " <- " << lt << " " << opToString(op) << " " << rt;
-        }
+        void print(ostream &os);
+
+        vector <string> toL2(string &suffix);
     };
 
     struct AssignCmpInst : public Instruction {
         string var, lt, rt;
         CMP cmp;
 
-        ~AssignCmpInst() {};
+        ~AssignCmpInst();
 
-        void print(ostream &os) {
-            os << var << " <- " << lt << " " << cmpToString(cmp) << " " << rt;
-        }
+        void print(ostream &os);
+
+        vector <string> toL2(string &suffix);
     };
 
     struct LoadInst : public Instruction {
         string lvar, rvar;
 
-        ~LoadInst() {};
+        ~LoadInst();
 
-        void print(ostream &os) {
-            os << lvar << " <- load " << rvar;
-        }
+        void print(ostream &os);
+
+        vector <string> toL2(string &suffix);
     };
 
     struct StoreInst : public Instruction {
         string var, s;
 
-        ~StoreInst() {};
+        ~StoreInst();
 
-        void print(ostream &os) {
-            os << "store " << var << " <- " << s;
-        }
+        void print(ostream &os);
+
+        vector <string> toL2(string &suffix);
     };
 
     struct BranchInst : public Instruction {
         string var, llabel, rlabel;
 
-        ~BranchInst() {};
+        ~BranchInst();
 
-        void print(ostream &os) {
-            if (var.length() == 0) {
-                os << "br " << llabel;
-            } else {
-                os << "br " << var << " " << llabel << " " << rlabel;
-            }
-        }
+        void print(ostream &os);
+
+        vector <string> toL2(string &suffix);
     };
 
     struct LabelInst : public Instruction {
         string label;
 
-        ~LabelInst() {};
+        ~LabelInst();
 
-        void print(ostream &os) {
-            os << label;
-        }
+        void print(ostream &os);
+
+        vector <string> toL2(string &suffix);
     };
 
     struct ReturnInst : public Instruction {
         string var;
 
-        ~ReturnInst() {};
+        ~ReturnInst();
 
-        void print(ostream &os) {
-            if (var.length() == 0) {
-                os << "return";
-            } else {
-                os << "return " << var;
-            }
-        }
+        void print(ostream &os);
+
+        vector <string> toL2(string &suffix);
     };
 
     struct CallInst : public Instruction {
         string callee;
         vector <string> args;
 
-        ~CallInst() {};
+        ~CallInst();
 
-        void print(ostream &os) {
-            os << "call " << callee << " (";
-            for (int i = 0; i < args.size(); i++) {
-                if (i == 0) {
-                    os << args[i];
-                } else {
-                    os << ", " << args[i];
-                }
-            }
-            os << ")";
-        }
+        void print(ostream &os);
+
+        vector <string> toL2(string &suffix);
     };
 
     struct AssignCallInst : public Instruction {
         string var, callee;
         vector <string> args;
 
-        ~AssignCallInst() {};
+        ~AssignCallInst();
 
-        void print(ostream &os) {
-            os << var << " <- call " << callee << " (";
-            for (int i = 0; i < args.size(); i++) {
-                if (i == 0) {
-                    os << args[i];
-                } else {
-                    os << ", " << args[i];
-                }
-            }
-            os << ")";
-        }
+        void print(ostream &os);
+
+        vector <string> toL2(string &suffix);
     };
 
     struct Function {
@@ -195,22 +169,16 @@ namespace L3 {
         vector <string> arguments;
         vector<Instruction *> instructions;
 
-        ~Function() {
-            for (auto const &i : instructions) {
-                delete i;
-            }
-        }
+        ~Function();
     };
 
     struct Program {
         string name;
-        vector <Function*> functions;
+        vector<Function *> functions;
 
-        ~Program() {
-            for (auto const &f : functions) {
-                delete f;
-            }
-        }
+        ~Program();
+
+        vector <string> toL2();
     };
 
 }
