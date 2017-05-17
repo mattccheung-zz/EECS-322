@@ -197,7 +197,7 @@ namespace IR {
            << "    " << "store " << addr << " <- " << args.size() * 2 + 1 << endl;
         for (auto const &arg : args) {
             os << "    " << addr << " <- " << addr << " + 8" << endl
-               << "    " << "store " << addr << " <- " << arg << endl;
+               << "    " << "store " << addr << " <- " << strip(arg) << endl;
         }
     }
 
