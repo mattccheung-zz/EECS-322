@@ -106,7 +106,15 @@ namespace L3 {
     vector <string> AssignCmpInst::toL2(string &suffix) {
         vector <string> l2;
         stringstream ss;
-        ss << "(" << var << " <- " << lt << " " << cmpToString(cmp) << " " << rt << ")";
+        ss << "(" << var << " <- ";
+        if (cmp == LT || cmp == LE || cmp == EQ) {
+            ss << lt << " " << cmpToString(cmp) << " " << rt;
+        } else if (cmp == GT) {
+            ss << rt << " < " << lt;
+        } else {
+            ss << rt << " <= " << lt;
+        }
+        ss << ")";
         l2.push_back(ss.str());
         return l2;
     }

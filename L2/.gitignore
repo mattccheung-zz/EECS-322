@@ -6,3 +6,4 @@ obj/
 core.*
 tests/liveness/*.tmp
 tests/*.tmp
+prog.*

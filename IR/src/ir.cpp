@@ -203,8 +203,7 @@ namespace IR {
     }
 
     void NewTupleInst::print(ostream &os) {
-        os << strip(var) << " <- call allocate(" << strip(t) << ", 1)" << endl
-           << "    " << var << " <- new Tuple(" << t << ")";
+        os << strip(var) << " <- call allocate(" << strip(t) << ", 1)" << endl;
     }
 
     BasicBlock::BasicBlock(vector <Instruction *> insts) {

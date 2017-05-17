@@ -5,3 +5,4 @@ obj/*.o
 *.S
 core.*
 tests/*.tmp
+prog.*
