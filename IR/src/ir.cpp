@@ -1,9 +1,30 @@
+#include <sstream>
+#include <cstdlib>
+
 #include "ir.h"
 
 using namespace std;
 
 
 namespace IR {
+
+    string strip(const string &s) {
+        return s[0] == '%' ? s.substr(1) : s;
+    }
+
+    string genRandStr(int len) {
+        static const char alphahum[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        static bool flag = false;
+        if (!flag) {
+            flag = true;
+            srand(time(NULL));
+        }
+        stringstream ss;
+        for (int i = 0; i < len; i++) {
+            ss << alphahum[rand() % (sizeof(alphahum) - 1)];
+        }
+        return ss.str();
+    }
 
     Type::Type(const string &s) {
         type = parseType(s);
@@ -49,7 +70,7 @@ namespace IR {
         if (t.empty()) {
             os << "br " << lb;
         } else {
-            os << "br " << t << " " << lb << " " << rb;
+            os << "br " << strip(t) << " " << lb << " " << rb;
         }
     }
 
@@ -61,7 +82,7 @@ namespace IR {
         if (t.empty()) {
             os << "return";
         } else {
-            os << "return " << t;
+            os << "return " << strip(t);
         }
     }
 
@@ -71,7 +92,7 @@ namespace IR {
     }
 
     void TypeInst::print(ostream &os) {
-        os << type.toString() << " " << var;
+        //os << ";" << type.toString() << " " << var;
     }
 
     AssignInst::AssignInst(const string &v, const string &s) {
@@ -92,7 +113,13 @@ namespace IR {
     }
 
     void AssignInst::print(ostream &os) {
-        os << var << " <- " << s << " not complete";
+        if (!varIndex.empty()) {
+//            os << "assign instruction var index not empty";
+        } else if (!sIndex.empty()) {
+//            os << "assign instruction s index not empty";
+        } else {
+            os << strip(var) << " <- " << strip(s);
+        }
     }
 
     AssignOpInst::AssignOpInst(const string &var, const string &lt, const string &rt, const string &op) {
@@ -103,7 +130,7 @@ namespace IR {
     }
 
     void AssignOpInst::print(ostream &os) {
-        os << var << " <- " << lt << " " << opToString(op) << " " << rt;
+        os << strip(var) << " <- " << strip(lt) << " " << opToString(op) << " " << strip(rt);
     }
 
     AssignLengthInst::AssignLengthInst(const string &lv, const string &rv, const string &t) {
@@ -113,7 +140,11 @@ namespace IR {
     }
 
     void AssignLengthInst::print(ostream &os) {
-        os << lv << " <- length " << rv << " " << t;
+        string offset = "addr_" + genRandStr(2);
+        os << offset << " <- " << strip(t) << " * 8" << endl
+           << "    " << offset << " <- " << offset << " + 16" << endl
+           << "    " << offset << " <- " << offset << " + " << strip(rv) << endl
+           << "    " << strip(lv) << " <- load " << offset;
     }
 
     AssignCallInst::AssignCallInst(const string &c, const vector <string> &as) {
@@ -129,9 +160,17 @@ namespace IR {
 
     void AssignCallInst::print(ostream &os) {
         if (!var.empty()) {
-            os << var << " <- ";
+            os << strip(var) << " <- ";
         }
-        os << "call " << callee << " args not complete";
+        os << "call " << callee << "(";
+        for (int i = 0; i < args.size(); i++) {
+            if (i == 0) {
+                os << strip(args[i]);
+            } else {
+                os << ", " << strip(args[i]);
+            }
+        }
+        os << ")";
     }
 
     NewArrayInst::NewArrayInst(const string &v, const vector <string> as) {
@@ -140,7 +179,22 @@ namespace IR {
     }
 
     void NewArrayInst::print(ostream &os) {
-        os << var << "<- new Array(args) not complete";
+        string count = "cnt_" + genRandStr(2), d = "dim_" + genRandStr(2), addr = "addr_" + genRandStr(2);
+        os << count << " <- 1" << endl;
+        for (auto const &arg : args) {
+            os << "    " << d << " <- " << strip(arg) << " >> 1" << endl
+               << "    " << count << " <- " << count << " * " << d << endl;
+        }
+        os << "    " << count << " <- " << count << " + " << args.size() << endl
+           << "    " << count << " <- " << count << " << 1" << endl
+           << "    " << count << " <- " << count << " + 3" << endl
+           << "    " << strip(var) << " <- call allocate(" << count << ", 1)" << endl
+           << "    " << addr << " <- " << strip(var) << " + 8" << endl
+           << "    " << "store " << addr << " <- " << args.size() * 2 + 1 << endl;
+        for (auto const &arg : args) {
+            os << "    " << addr << " <- " << addr << " + 8" << endl
+               << "    " << "store " << addr << " <- " << arg << endl;
+        }
     }
 
     NewTupleInst::NewTupleInst(const string &v, const string &t) {
@@ -149,7 +203,8 @@ namespace IR {
     }
 
     void NewTupleInst::print(ostream &os) {
-        os << var << " <- new Tuple(" << t << ")";
+        os << strip(var) << " <- call allocate(" << strip(t) << ", 1)" << endl
+           << "    " << var << " <- new Tuple(" << t << ")";
     }
 
     BasicBlock::BasicBlock(vector <Instruction *> insts) {
@@ -171,9 +226,37 @@ namespace IR {
         }
     }
 
+    string Function::toL3() {
+        stringstream ss;
+        ss << "define " << name << " (";
+        for (int i = 0; i < arguments.size(); i++) {
+            if (i == 0) {
+                ss << arguments[i]->var.substr(1);
+            } else {
+                ss << ", " << arguments[i]->var.substr(1);
+            }
+        }
+        ss << ") {" << endl;
+        for (auto const &bb : basicBlocks) {
+            for (auto const &inst : bb->instructions) {
+                ss << "    " << *inst << endl;
+            }
+        }
+        ss << "}" << endl;
+        return ss.str();
+    }
+
     Program::~Program() {
         for (auto const &f : functions) {
             delete f;
         }
+    }
+
+    string Program::toL3() {
+        stringstream ss;
+        for (auto const &f : functions) {
+            ss << f->toL3() << endl;
+        }
+        return ss.str();
     }
 }

@@ -34,6 +34,7 @@ int main(int argc, char **argv) {
     ofstream output;
     output.open("prog.L3");
     Program p = IRParseFile(argv[optind]);
+    output << p.toL3() << endl;
     output.close();
     return 0;
 }

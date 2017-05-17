@@ -181,7 +181,7 @@ namespace IR {
             f->name = operands[1];
             f->returnType = Type(operands[0]);
             for (int i = 2; i < operands.size(); i += 2) {
-                f->arguments.push_back(new TypeInst(operands[i], operands[i + 2]));
+                f->arguments.push_back(new TypeInst(operands[i], operands[i + 1]));
             }
             p.functions.push_back(f);
             clearCache();

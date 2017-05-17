@@ -208,6 +208,8 @@ namespace IR {
         vector<BasicBlock *> basicBlocks;
 
         ~Function();
+
+        string toL3();
     };
 
     struct Program {
@@ -215,6 +217,8 @@ namespace IR {
         vector<Function *> functions;
 
         ~Program();
+
+        string toL3();
     };
 }
 
