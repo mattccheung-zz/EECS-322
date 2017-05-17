@@ -162,7 +162,7 @@ namespace IR {
         if (!var.empty()) {
             os << strip(var) << " <- ";
         }
-        os << "call " << callee << "(";
+        os << "call " << strip(callee) << "(";
         for (int i = 0; i < args.size(); i++) {
             if (i == 0) {
                 os << strip(args[i]);
