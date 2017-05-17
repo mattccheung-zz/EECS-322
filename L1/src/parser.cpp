@@ -19,6 +19,10 @@ using namespace pegtl;
 using namespace std;
 
 namespace L1 {
+#ifdef DEBUG
+    int n;
+#endif
+
 
     /*
      * Grammar rules from now on.
@@ -184,6 +188,8 @@ namespace L1 {
 
     struct inst_start : pegtl::one<'('> {};
 
+    struct inst_end : pegtl::one<')'> {};
+
     struct goto_label : label {};
 
     struct instruction :
@@ -228,7 +234,7 @@ namespace L1 {
                     >
                 >,
                 seps,
-                pegtl::one<')'>
+                inst_end
             >
         > {};
 
@@ -300,6 +306,10 @@ namespace L1 {
             L1::Function *newF = new L1::Function();
             newF->name = in.string();
             p.functions.push_back(newF);
+#ifdef DEBUG
+            n = 0;
+            cout << "function: " << in.string() << endl;
+#endif
         }
     };
 
@@ -401,8 +411,20 @@ struct action<operand_sop> {
             L1::Function *currentF = p.functions.back();
             L1::Instruction *newI = new L1::Instruction();
             currentF->instructions.push_back(newI);
+#ifdef DEBUG
+            cout << ++n << "\t" << in.string();
+#endif
         }
     };
+
+#ifdef DEBUG
+    template<>
+    struct action<inst_end> {
+        static void apply(const pegtl::input &in, L1::Program &p) {
+            cout << in.string() << endl;
+        }
+    };
+#endif
 
     template<>
     struct action<operator_movq> {
