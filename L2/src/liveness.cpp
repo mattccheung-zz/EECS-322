@@ -131,7 +131,9 @@ namespace L2 {
                     case Operator_Type::RETURN:
                         break;
                     default:
-                        out_tmp = in[i + 1];
+                        if (i < n - 1) {
+                            out_tmp = in[i + 1];
+                        }
                         break;
                 }
                 if (out_tmp != out[i]) {
