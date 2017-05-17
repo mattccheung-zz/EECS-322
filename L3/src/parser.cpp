@@ -57,7 +57,7 @@ namespace L3 {
     struct branchVarInst : seq<kwBr, seps, var, seps, label, seps, label> {};
     struct returnInst : kwReturn {};
     struct returnVarInst : seq<kwReturn, seps, t> {};
-    struct callInstTmp : seq<kwCall, seps, callee, seps, one<'('>, seps, args, seps, one<')'>> {};
+    struct callInstTmp : seq<kwCall, seps, callee, seps, one<'('>, seps, opt<args>, seps, one<')'>> {};
     struct callInst : callInstTmp {};
     struct assignCallInst : seq<var, seps, opAssign, seps, callInstTmp> {};
 

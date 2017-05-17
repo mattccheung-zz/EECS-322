@@ -187,7 +187,6 @@ namespace L2 {
                     pegtl::seq<inst_cjump, seps, t, seps, operator_cmp, seps, t, seps, inst_cjump_label, seps, inst_cjump_label>,
                     pegtl::seq<inst_goto, seps, goto_label>,
                     inst_return,
-                    pegtl::seq<inst_call, seps, pegtl::sor<inst_print, inst_array_error, inst_allocate, u>, seps, inst_call_number>,
                     pegtl::seq<
                         w, seps,
                             pegtl::sor<
@@ -201,7 +200,8 @@ namespace L2 {
                             pegtl::seq<pegtl::sor<operator_addq, operator_subq>, seps, pegtl::sor<t, inst_mem>>,
                             pegtl::seq<pegtl::sor<operator_imulq, operator_andq>, seps, t>
                         >
-                    >
+                    >,
+                    pegtl::seq<inst_call, seps, pegtl::sor<inst_print, inst_array_error, inst_allocate, u>, seps, inst_call_number>
                 >,
                 seps,
                 inst_end
@@ -376,6 +376,9 @@ namespace L2 {
                 }
             }
 #ifdef DEBUG
+            for (auto const &d : p.functions.back()->instructions.back()->operands) {
+                cout << d << " ";
+            }
             cout << in.string() << endl;
 #endif
         }
@@ -510,6 +513,7 @@ namespace L2 {
     template<>
     struct action<inst_call> {
         static void apply(const pegtl::input &in, Program &p) {
+            p.functions.back()->instructions.back()->operands.clear();
             p.functions.back()->instructions.back()->operators.push_back(Operator_Type::CALL);
         }
     };

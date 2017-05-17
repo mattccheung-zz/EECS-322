@@ -53,7 +53,11 @@ namespace IR {
     }
 
     void LabelInst::print(ostream &os) {
-        os << lb;
+        if (lb == ":entry") {
+            os << lb << genRandStr(2);
+        } else {
+            os << lb;
+        }
     }
 
     BranchInst::BranchInst(const string &s) {
