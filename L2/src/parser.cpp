@@ -360,7 +360,7 @@ namespace L2 {
     struct action<inst_start> {
         static void apply(const pegtl::input &in, Program &p) {
 #ifdef DEBUG
-            cout << (++debug_line_number) << "\t" << in.string() << endl;
+            cout << (++debug_line_number) << "\t" << in.string();
 #endif
             p.functions.back()->instructions.push_back(new Instruction());
         }
@@ -375,6 +375,9 @@ namespace L2 {
                     inst->operands.pop_back();
                 }
             }
+#ifdef DEBUG
+            cout << in.string() << endl;
+#endif
         }
     };
 
