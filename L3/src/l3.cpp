@@ -338,7 +338,7 @@ namespace L3 {
         }
         bool isRunTime = callee == "print" || callee == "allocate" || callee == "array-error";
         if (!isRunTime) {
-            ss << "((mem rsp -8) <- " << callee << "_ret" << suffix << ")";
+            ss << "((mem rsp -8) <- " << (callee[0] == ':' ? callee : ":" + callee) << "_ret" << suffix << ")";
             l2.push_back(ss.str());
             ss.str(string());
             for (int i = 6, sp = -16; i < args.size(); i++, sp -= 8) {
@@ -351,7 +351,7 @@ namespace L3 {
         l2.push_back(ss.str());
         ss.str(string());
         if (!isRunTime) {
-            ss << callee << "_ret" << suffix;
+            ss << (callee[0] == ':' ? callee : ":" + callee) << "_ret" << suffix;
             l2.push_back(ss.str());
             ss.str(string());
         }
