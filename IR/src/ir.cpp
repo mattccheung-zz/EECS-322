@@ -326,8 +326,12 @@ namespace IR {
         string cnt = "_cnt_nry_inst_", dim = "_dim_nry_inst_", addr = "_addr_nry_inst_";
         l3.push_back(cnt + " <- 1");
         for (auto const &arg : args) {
-            l3.push_back(dim + " <- " + strip(arg) + " >> 1");
-            l3.push_back(cnt + " <- " + cnt + " * " + dim);
+            if (isVar(arg)) {
+                l3.push_back(dim + " <- " + strip(arg) + " >> 1");
+                l3.push_back(cnt + " <- " + cnt + " * " + dim);
+            } else {
+                l3.push_back(cnt + " <- " + cnt + " * " + to_string(stoll(arg) / 2));
+            }
         }
         l3.push_back(cnt + " <- " + cnt + " + " + to_string(args.size() + 1));
         l3.push_back(cnt + " <- " + cnt + " << 1");
