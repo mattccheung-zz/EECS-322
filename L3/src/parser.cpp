@@ -278,7 +278,7 @@ namespace L3 {
     template<>
     struct action<callInst> {
         static void apply(const input &in, Program &p) {
-            CallInst *inst = new CallInst;
+            AssignCallInst *inst = new AssignCallInst;
             inst->callee = operands.front();
             operands.erase(operands.begin());
             inst->args = operands;

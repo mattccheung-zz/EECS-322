@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 #include <stack>
+#include <set>
+#include <map>
 
 #include "l3.h"
 
@@ -276,67 +278,13 @@ namespace L3 {
         return retNode;
     }
 
-
-    CallInst::~CallInst() {}
-
-    void CallInst::print(ostream &os) {
-        os << "call " << callee << " (";
-        for (int i = 0; i < args.size(); i++) {
-            if (i == 0) {
-                os << args[i];
-            } else {
-                os << ", " << args[i];
-            }
-        }
-        os << ")";
-    }
-
-    vector <string> CallInst::toL2(string &suffix) {
-        vector <string> l2;
-        stringstream ss;
-        for (int i = 0; i < args.size() && i < argReg.size(); i++) {
-            ss << "(" << argReg[i] << " <- " << args[i] << ")";
-            l2.push_back(ss.str());
-            ss.str(string());
-        }
-        bool isRunTime = callee == "print" || callee == "allocate" || callee == "array-error";
-        if (!isRunTime) {
-            ss << "((mem rsp -8) <- " << (callee[0] == ':' ? callee : ":" + callee) << "_ret" << suffix << ")";
-            l2.push_back(ss.str());
-            ss.str(string());
-            for (int i = 6, sp = -16; i < args.size(); i++, sp -= 8) {
-                ss << "(mem rsp " << sp << ") <- " << args[i] << ")";
-                l2.push_back(ss.str());
-                ss.str(string());
-            }
-        }
-        ss << "(call " << callee << " " << args.size() << ")";
-        l2.push_back(ss.str());
-        ss.str(string());
-        if (!isRunTime) {
-            ss << (callee[0] == ':' ? callee : ":" + callee) << "_ret" << suffix;
-            l2.push_back(ss.str());
-            ss.str(string());
-        }
-        return l2;
-    }
-
-    TreeNode *CallInst::getInstTree() {
-        TreeNode *callNode = new TreeNode("call"), *calleeNode = new TreeNode(callee);
-        callNode->firstChild = calleeNode;
-        TreeNode *prevNode = calleeNode;
-        for (auto const &arg : args) {
-            prevNode->nextSibling = new TreeNode(arg);
-            prevNode = prevNode->nextSibling;
-        }
-        return callNode;
-    }
-
-
     AssignCallInst::~AssignCallInst() {};
 
     void AssignCallInst::print(ostream &os) {
-        os << var << " <- call " << callee << " (";
+        if (!var.empty()) {
+            os << var << " <- ";
+        }
+        os << "call " << callee << " (";
         for (int i = 0; i < args.size(); i++) {
             if (i == 0) {
                 os << args[i];
@@ -374,8 +322,10 @@ namespace L3 {
             l2.push_back(ss.str());
             ss.str(string());
         }
-        ss << "(" << var << " <- rax)";
-        l2.push_back(ss.str());
+        if (!var.empty()) {
+            ss << "(" << var << " <- rax)";
+            l2.push_back(ss.str());
+        }
         return l2;
     }
 
@@ -388,7 +338,7 @@ namespace L3 {
             prevNode->nextSibling = new TreeNode(arg);
             prevNode = prevNode->nextSibling;
         }
-        return varNode;
+        return var.empty() ? callNode : varNode;
     }
 
 
@@ -425,23 +375,19 @@ namespace L3 {
 
     vector <string> Program::toL2() {
         vector <string> l2;
-        stringstream ss;
+        set<string> programLabelSet;
         int index = 0;
         l2.push_back("(" + name);
         for (auto const &f : functions) {
+            set<string> functionLabelSet;
+            map<string, string> labelMap;
             l2.push_back("    (" + f->name);
-            ss << f->arguments.size() << " 0";
-            l2.push_back("        " + ss.str());
-            ss.str(string());
+            l2.push_back("        " + to_string(f->arguments.size()) + " 0");
             for (int i = 0; i < f->arguments.size() && i < argReg.size(); i++) {
-                ss << "        (" << f->arguments[i] << " <- " << argReg[i] << ")";
-                l2.push_back(ss.str());
-                ss.str(string());
+                l2.push_back("        (" + f->arguments[i] + " <- " + argReg[i] + ")");
             }
             for (int i = 6, sp = 8 * (f->arguments.size() - 7); i < f->arguments.size(); i++, sp -= 8) {
-                ss << "(" << f->arguments[i] << " <- (stack-arg " << sp << "))";
-                l2.push_back(ss.str());
-                ss.str(string());
+                l2.push_back("        (" + f->arguments[i] + " <- (stack-arg " + to_string(sp) + "))");
             }
             for (auto const &inst : f->instructions) {
                 string idx = to_string(index++);

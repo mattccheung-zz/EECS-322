@@ -162,19 +162,6 @@ namespace L3 {
         TreeNode *getInstTree();
     };
 
-    struct CallInst : public Instruction {
-        string callee;
-        vector <string> args;
-
-        ~CallInst();
-
-        void print(ostream &os);
-
-        vector <string> toL2(string &suffix);
-
-        TreeNode *getInstTree();
-    };
-
     struct AssignCallInst : public Instruction {
         string var, callee;
         vector <string> args;
