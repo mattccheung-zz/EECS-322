@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <map>
 
 
 using namespace std;
@@ -74,6 +75,8 @@ namespace IR {
         virtual ~Instruction() {};
 
         virtual void print(ostream &os) = 0;
+
+        virtual vector <string> toL3(const map<string, Type> &varMap) = 0;
     };
 
     ostream &operator<<(ostream &os, Instruction &inst);
@@ -86,6 +89,8 @@ namespace IR {
         ~LabelInst() {};
 
         void print(ostream &os);
+
+        vector <string> toL3(const map<string, Type> &varMap);
     };
 
     struct BranchInst : public Instruction {
@@ -98,6 +103,8 @@ namespace IR {
         ~BranchInst() {};
 
         void print(ostream &os);
+
+        vector <string> toL3(const map<string, Type> &varMap);
     };
 
     struct ReturnInst : public Instruction {
@@ -110,6 +117,8 @@ namespace IR {
         ~ReturnInst() {};
 
         void print(ostream &os);
+
+        vector <string> toL3(const map<string, Type> &varMap);
     };
 
     struct TypeInst : public Instruction {
@@ -121,6 +130,8 @@ namespace IR {
         ~TypeInst() {};
 
         void print(ostream &os);
+
+        vector <string> toL3(const map<string, Type> &varMap);
     };
 
     struct AssignInst : public Instruction {
@@ -136,6 +147,8 @@ namespace IR {
         ~AssignInst() {};
 
         void print(ostream &os);
+
+        vector <string> toL3(const map<string, Type> &varMap);
     };
 
     struct AssignOpInst : public Instruction {
@@ -147,6 +160,8 @@ namespace IR {
         ~AssignOpInst() {};
 
         void print(ostream &os);
+
+        vector <string> toL3(const map<string, Type> &varMap);
     };
 
     struct AssignLengthInst : public Instruction {
@@ -157,6 +172,8 @@ namespace IR {
         ~AssignLengthInst() {};
 
         void print(ostream &os);
+
+        vector <string> toL3(const map<string, Type> &varMap);
     };
 
     struct AssignCallInst : public Instruction {
@@ -170,6 +187,8 @@ namespace IR {
         ~AssignCallInst() {};
 
         void print(ostream &os);
+
+        vector <string> toL3(const map<string, Type> &varMap);
     };
 
     struct NewArrayInst : public Instruction {
@@ -181,6 +200,8 @@ namespace IR {
         ~NewArrayInst() {};
 
         void print(ostream &os);
+
+        vector <string> toL3(const map<string, Type> &varMap);
     };
 
     struct NewTupleInst : public Instruction {
@@ -191,6 +212,8 @@ namespace IR {
         ~NewTupleInst() {};
 
         void print(ostream &os);
+
+        vector <string> toL3(const map<string, Type> &varMap);
     };
 
     struct BasicBlock {

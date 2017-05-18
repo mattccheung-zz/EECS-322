@@ -1,5 +1,6 @@
 #include <sstream>
 #include <cstdlib>
+#include <map>
 
 #include "ir.h"
 
@@ -8,8 +9,12 @@ using namespace std;
 
 namespace IR {
 
-    string strip(const string &s) {
+    inline string strip(const string &s) {
         return s[0] == '%' ? s.substr(1) : s;
+    }
+
+    inline bool isVar(const string &s) {
+        return s[0] == '%';
     }
 
     string genRandStr(int len) {
@@ -60,6 +65,12 @@ namespace IR {
         }
     }
 
+    vector <string> LabelInst::toL3(const map <string, Type> &varMap) {
+        vector <string> l3;
+        l3.push_back(lb == ":entry" ? lb + genRandStr(2) : lb);
+        return l3;
+    }
+
     BranchInst::BranchInst(const string &s) {
         lb = s;
     }
@@ -78,6 +89,16 @@ namespace IR {
         }
     }
 
+    vector <string> BranchInst::toL3(const map <string, Type> &varMap) {
+        vector <string> l3;
+        if (t.empty()) {
+            l3.push_back("br " + lb);
+        } else {
+            l3.push_back("br " + strip(t) + " " + lb + " " + rb);
+        }
+        return l3;
+    }
+
     ReturnInst::ReturnInst(const string &s) {
         t = s;
     }
@@ -90,6 +111,16 @@ namespace IR {
         }
     }
 
+    vector <string> ReturnInst::toL3(const map <string, Type> &varMap) {
+        vector <string> l3;
+        if (t.empty()) {
+            l3.push_back("return");
+        } else {
+            l3.push_back("return " + strip(t));
+        }
+        return l3;
+    }
+
     TypeInst::TypeInst(const string &t, const string &v) {
         type = Type(t);
         var = v;
@@ -97,6 +128,11 @@ namespace IR {
 
     void TypeInst::print(ostream &os) {
         //os << ";" << type.toString() << " " << var;
+    }
+
+    vector <string> TypeInst::toL3(const map <string, Type> &varMap) {
+        vector <string> l3;
+        return l3;
     }
 
     AssignInst::AssignInst(const string &v, const string &s) {
@@ -126,6 +162,18 @@ namespace IR {
         }
     }
 
+    vector <string> AssignInst::toL3(const map <string, Type> &varMap) {
+        vector <string> l3;
+        if (!varIndex.empty()) {
+            // TODO: assign value to array, what if it is a tuple
+        } else if (!sIndex.empty()) {
+            // TODO: access value from array, what if it is a tuple
+        } else {
+            l3.push_back(strip(var) + " <- " + strip(s));
+        }
+        return l3;
+    }
+
     AssignOpInst::AssignOpInst(const string &var, const string &lt, const string &rt, const string &op) {
         this->var = var;
         this->lt = lt;
@@ -135,6 +183,12 @@ namespace IR {
 
     void AssignOpInst::print(ostream &os) {
         os << strip(var) << " <- " << strip(lt) << " " << opToString(op) << " " << strip(rt);
+    }
+
+    vector <string> AssignOpInst::toL3(const map <string, Type> &varMap) {
+        vector <string> l3;
+        l3.push_back(strip(var) + " <- " + strip(lt) + " " + opToString(op) + " " + strip(rt));
+        return l3;
     }
 
     AssignLengthInst::AssignLengthInst(const string &lv, const string &rv, const string &t) {
@@ -149,6 +203,20 @@ namespace IR {
            << "    " << offset << " <- " << offset << " + 16" << endl
            << "    " << offset << " <- " << offset << " + " << strip(rv) << endl
            << "    " << strip(lv) << " <- load " << offset;
+    }
+
+    vector <string> AssignLengthInst::toL3(const map <string, Type> &varMap) {
+        vector <string> l3;
+        string addr = "_addr_len_inst_";
+        if (isVar(t)) {
+            l3.push_back(addr + " <- " + strip(t) + " * 8");
+            l3.push_back(addr + " <- " + addr + " + 16");
+        } else {
+            l3.push_back(addr + " <- " + to_string(stoll(t) * 8 + 16));
+        }
+        l3.push_back(addr + " <- " + addr + " + " + strip(rv));
+        l3.push_back(strip(lv) + " <- load " + addr);
+        return l3;
     }
 
     AssignCallInst::AssignCallInst(const string &c, const vector <string> &as) {
@@ -177,6 +245,25 @@ namespace IR {
         os << ")";
     }
 
+    vector <string> AssignCallInst::toL3(const map <string, Type> &varMap) {
+        vector <string> l3;
+        stringstream ss;
+        if (!var.empty()) {
+            ss << strip(var) << " <- ";
+        }
+        ss << "call " << strip(callee) << "(";
+        for (int i = 0; i < args.size(); i++) {
+            if (i == 0) {
+                ss << strip(args[i]);
+            } else {
+                ss << ", " << strip(args[i]);
+            }
+        }
+        ss << ")";
+        l3.push_back(ss.str());
+        return l3;
+    }
+
     NewArrayInst::NewArrayInst(const string &v, const vector <string> as) {
         var = v;
         args = as;
@@ -201,6 +288,27 @@ namespace IR {
         }
     }
 
+    vector <string> NewArrayInst::toL3(const map <string, Type> &varMap) {
+        vector <string> l3;
+        string cnt = "_cnt_nry_inst_", dim = "_dim_nry_inst_", addr = "_addr_nry_inst_";
+        l3.push_back(cnt + " <- 1");
+        for (auto const &arg : args) {
+            l3.push_back(dim + " <- " + strip(arg) + " >> 1");
+            l3.push_back(cnt + " <- " + cnt + " * " + dim);
+        }
+        l3.push_back(cnt + " <- " + cnt + " + " + to_string(args.size() + 1));
+        l3.push_back(cnt + " <- " + cnt + " << 1");
+        l3.push_back(cnt + " <- " + cnt + " + 1");
+        l3.push_back(strip(var) + " <- call allocate(" + cnt + ", 1)");
+        l3.push_back(addr + " <- " + strip(var) + " + 8");
+        l3.push_back("store " + addr + " <- " + to_string(args.size() * 2 + 1));
+        for (auto const &arg : args) {
+            l3.push_back(addr + " <- " + addr + " + 8");
+            l3.push_back("store " + addr + " <- " + strip(arg));
+        }
+        return l3;
+    }
+
     NewTupleInst::NewTupleInst(const string &v, const string &t) {
         var = v;
         this->t = t;
@@ -208,6 +316,12 @@ namespace IR {
 
     void NewTupleInst::print(ostream &os) {
         os << strip(var) << " <- call allocate(" << strip(t) << ", 1)" << endl;
+    }
+
+    vector <string> NewTupleInst::toL3(const map <string, Type> &varMap) {
+        vector <string> l3;
+        l3.push_back(strip(var) + " <- call allocate(" + strip(t) + ", 1)");
+        return l3;
     }
 
     BasicBlock::BasicBlock(vector <Instruction *> insts) {
@@ -230,6 +344,7 @@ namespace IR {
     }
 
     string Function::toL3() {
+        map <string, Type> varMap;
         stringstream ss;
         ss << "define " << name << " (";
         for (int i = 0; i < arguments.size(); i++) {
@@ -242,7 +357,13 @@ namespace IR {
         ss << ") {" << endl;
         for (auto const &bb : basicBlocks) {
             for (auto const &inst : bb->instructions) {
-                ss << "    " << *inst << endl;
+                if (TypeInst *typeInst = dynamic_cast<TypeInst *>(inst)) {
+                    varMap[typeInst->var] = typeInst->type;
+                } else {
+                    for (auto const &l3 : inst->toL3(varMap)) {
+                        ss << "    " << l3 << endl;
+                    }
+                }
             }
         }
         ss << "}" << endl;
