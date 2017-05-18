@@ -1,6 +1,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <map>
+#include <cassert>
 
 #include "ir.h"
 
@@ -164,10 +165,42 @@ namespace IR {
 
     vector <string> AssignInst::toL3(const map <string, Type> &varMap) {
         vector <string> l3;
-        if (!varIndex.empty()) {
-            // TODO: assign value to array, what if it is a tuple
-        } else if (!sIndex.empty()) {
-            // TODO: access value from array, what if it is a tuple
+        string addr = "_addr_asn_inst_", dim = "_dim_asn_inst_", ofst = "_ofst_asn_inst_", fct = "_fct_asn_inst_";
+        if (!varIndex.empty() || !sIndex.empty()) {
+            vector<string> indexes = varIndex.empty() ? sIndex : varIndex;
+            string array = varIndex.empty() ? s : var;
+            assert(varMap.count(array) > 0);
+            if (varMap.at(array).type == TUPLE) {
+                assert(indexes.size() == 1);
+                if (isVar(indexes[0])) {
+                    l3.push_back(addr + " <- " + strip(indexes[0]));
+                    l3.push_back(addr + " <- " + addr + " + 1");
+                } else {
+                    l3.push_back(addr + " <- " + to_string(stoll(indexes[0]) + 1));
+                }
+            } else {
+                l3.push_back(ofst + " <- " + to_string(indexes.size() + 1));
+                l3.push_back(ofst + " <- " + ofst + " * 8");
+                l3.push_back(ofst + " <- " + ofst + " + " + strip(array));
+                l3.push_back(fct + " <- 1");
+                l3.push_back(addr + " <- " + to_string(indexes.size() + 2) + " + " + strip(indexes.back()));
+                for (int i = indexes.size() - 2; i >= 0; i--) {
+                    l3.push_back(dim + " <- load " + ofst);
+                    l3.push_back(dim + " <- " + dim + " >> 1");
+                    l3.push_back(fct + " <- " + fct + " * " + dim);
+                    l3.push_back(dim + " <- " + fct + " * " + indexes[i]);
+                    l3.push_back(addr + " <- " + addr + " + " + dim);
+                    l3.push_back(ofst + " <- " + ofst + " - 8");
+                }
+            }
+            l3.push_back(addr + " <- " + addr + " * 8");
+            if (varIndex.empty()) {
+                l3.push_back(addr + " <- " + addr + " + " + strip(s));
+                l3.push_back(strip(var) + " <- load " + addr);
+            } else {
+                l3.push_back(addr + " <- " + addr + " + " + strip(var));
+                l3.push_back("store " + addr + " <- " + strip(s));
+            }
         } else {
             l3.push_back(strip(var) + " <- " + strip(s));
         }
@@ -353,6 +386,7 @@ namespace IR {
             } else {
                 ss << ", " << arguments[i]->var.substr(1);
             }
+            varMap[arguments[i]->var] = arguments[i]->type;
         }
         ss << ") {" << endl;
         for (auto const &bb : basicBlocks) {
