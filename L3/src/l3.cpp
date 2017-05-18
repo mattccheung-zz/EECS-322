@@ -78,12 +78,31 @@ namespace L3 {
 
     vector <string> AssignOpInst::toL2(string &suffix) {
         vector <string> l2;
-        stringstream ss;
-        ss << "(" << var << " <- " << lt << ")";
-        l2.push_back(ss.str());
-        ss.str(string());
-        ss << "(" << var << " " << opToString(op) << "= " << rt << ")";
-        l2.push_back(ss.str());
+        string tmp = "_tmp_aop_inst_";
+        if (var == lt) {
+            if (op == ADDQ && rt == "1") {
+                l2.push_back("(" + var + "++)");
+            } else if (op == SUBQ && rt == "1") {
+                l2.push_back("(" + var + "--)");
+            } else {
+                l2.push_back("(" + var + " " + opToString(op) + "= " + rt + ")");
+            }
+        } else if (var == rt && (op == ADDQ || op == IMULQ)) {
+            if (op == ADDQ || op == IMULQ) {
+                if (op == ADDQ && lt == "1") {
+                    l2.push_back("(" + var + "++)");
+                } else {
+                    l2.push_back("(" + var + " " + opToString(op) + "= " + lt + ")");
+                }
+            } else {
+                l2.push_back("(" + tmp + " <- " + lt + ")");
+                l2.push_back("(" + tmp + " " + opToString(op) + "= " + rt + ")");
+                l2.push_back("(" + var + " <- " + tmp + ")");
+            }
+        } else {
+            l2.push_back("(" + var + " <- " + lt + ")");
+            l2.push_back("(" + var + " " + opToString(op) + "= " + rt + ")");
+        }
         return l2;
     }
 
