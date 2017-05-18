@@ -30,6 +30,7 @@ namespace L3 {
 
     struct cmt : disable<one<';'>, until<eolf>> {};
     struct seps : star<sor<ascii::space, cmt>> {};
+    struct wseps : sor<ascii::space, cmt> {};
 
     struct op : sor<one<'+'>, one<'-'>, one<'*'>, one<'&'>, string<'<', '<'>, string<'>', '>'>> {};
     struct cmp : sor<one<'<'>, string<'<', '='>, one<'='>, string<'>', '='>, one<'>'>> {};
@@ -57,7 +58,7 @@ namespace L3 {
     struct branchVarInst : seq<kwBr, seps, var, seps, label, seps, label> {};
     struct returnInst : kwReturn {};
     struct returnVarInst : seq<kwReturn, seps, t> {};
-    struct callInstTmp : seq<kwCall, seps, callee, seps, one<'('>, seps, opt<args>, seps, one<')'>> {};
+    struct callInstTmp : seq<kwCall, wseps, callee, seps, one<'('>, seps, opt<args>, seps, one<')'>> {};
     struct callInst : callInstTmp {};
     struct assignCallInst : seq<var, seps, opAssign, seps, callInstTmp> {};
 
