@@ -188,7 +188,7 @@ namespace IR {
                     l3.push_back(dim + " <- load " + ofst);
                     l3.push_back(dim + " <- " + dim + " >> 1");
                     l3.push_back(fct + " <- " + fct + " * " + dim);
-                    l3.push_back(dim + " <- " + fct + " * " + indexes[i]);
+                    l3.push_back(dim + " <- " + fct + " * " + strip(indexes[i]));
                     l3.push_back(addr + " <- " + addr + " + " + dim);
                     l3.push_back(ofst + " <- " + ofst + " - 8");
                 }
