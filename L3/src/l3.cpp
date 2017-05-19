@@ -368,15 +368,14 @@ namespace L3 {
             for (auto const &inst : f->instructions) {
                 if (LabelInst *lbInst = dynamic_cast<LabelInst *>(inst)) {
                     if (programLabelSet.count(lbInst->label) > 0) {
-                        string newLabel = lbInst->label + "_" + f->name + "_";
+                        string newLabel = lbInst->label + "_" + f->name.substr(1) + "_";
                         labelMap[lbInst->label] = newLabel;
                         functionLabelSet.insert(newLabel);
                     } else {
                         functionLabelSet.insert(lbInst->label);
                     }
                 }
-                vector <string> instL2 = inst->toL2(labelMap);
-                for (auto const &s : instL2) {
+                for (auto const &s : inst->toL2(labelMap)) {
                     l2.push_back("        " + s);
                 }
             }
