@@ -10,6 +10,11 @@
 using namespace std;
 
 namespace L3 {
+    int n = 0;
+
+    inline string tsfLabel(const string &label, const map<string, string> &labelMap) {
+        return labelMap.count(label) > 0 ? labelMap.at(label) : label;
+    }
 
     vector <string> argReg = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
@@ -56,9 +61,9 @@ namespace L3 {
         os << var << " <- " << s;
     }
 
-    vector <string> AssignInst::toL2(string &suffix) {
+    vector <string> AssignInst::toL2(const map<string, string> &labelMap) {
         vector <string> l2;
-        l2.push_back("(" + var + " <- " + s + ")");
+        l2.push_back("(" + var + " <- " + tsfLabel(s, labelMap) + ")");
         return l2;
     }
 
@@ -75,7 +80,7 @@ namespace L3 {
         os << var << " <- " << lt << " " << opToString(op) << " " << rt;
     }
 
-    vector <string> AssignOpInst::toL2(string &suffix) {
+    vector <string> AssignOpInst::toL2(const map<string, string> &labelMap) {
         vector <string> l2;
         string tmp = "_tmp_aop_inst_";
         if (var == lt) {
@@ -121,7 +126,7 @@ namespace L3 {
         os << var << " <- " << lt << " " << cmpToString(cmp) << " " << rt;
     }
 
-    vector <string> AssignCmpInst::toL2(string &suffix) {
+    vector <string> AssignCmpInst::toL2(const map<string, string> &labelMap) {
         vector <string> l2;
         if (cmp == LT || cmp == LE || cmp == EQ) {
             l2.push_back("(" + var + " <- " + lt + " " + cmpToString(cmp) + " " + rt + ")");
@@ -149,7 +154,7 @@ namespace L3 {
         os << lvar << " <- load " << rvar;
     }
 
-    vector <string> LoadInst::toL2(string &suffix) {
+    vector <string> LoadInst::toL2(const map<string, string> &labelMap) {
         vector <string> l2;
         l2.push_back("(" + lvar + " <- (mem " + rvar + " 0))");
         return l2;
@@ -169,9 +174,9 @@ namespace L3 {
         os << "store " << var << " <- " << s;
     }
 
-    vector <string> StoreInst::toL2(string &suffix) {
+    vector <string> StoreInst::toL2(const map<string, string> &labelMap) {
         vector <string> l2;
-        l2.push_back("((mem " + var + " 0) <- " + s + ")");
+        l2.push_back("((mem " + var + " 0) <- " + tsfLabel(s, labelMap) + ")");
         return l2;
     }
 
@@ -193,12 +198,12 @@ namespace L3 {
         }
     }
 
-    vector <string> BranchInst::toL2(string &suffix) {
+    vector <string> BranchInst::toL2(const map<string, string> &labelMap) {
         vector <string> l2;
         if (var.length() == 0) {
-            l2.push_back("(goto " + llabel + ")");
+            l2.push_back("(goto " + tsfLabel(llabel, labelMap) + ")");
         } else {
-            l2.push_back("(cjump " + var + " = 0 " + rlabel + " " + llabel + ")");
+            l2.push_back("(cjump " + var + " = 0 " + tsfLabel(rlabel, labelMap) + " " + tsfLabel(llabel, labelMap) + ")");
         }
         return l2;
     }
@@ -223,9 +228,9 @@ namespace L3 {
         os << label;
     }
 
-    vector <string> LabelInst::toL2(string &suffix) {
+    vector <string> LabelInst::toL2(const map<string, string> &labelMap) {
         vector <string> l2;
-        l2.push_back(label);
+        l2.push_back(tsfLabel(label, labelMap));
         return l2;
     }
 
@@ -244,7 +249,7 @@ namespace L3 {
         }
     }
 
-    vector <string> ReturnInst::toL2(string &suffix) {
+    vector <string> ReturnInst::toL2(const map<string, string> &labelMap) {
         vector <string> l2;
         if (var.length() != 0) {
             l2.push_back("(rax <- " + var + ")");
@@ -278,21 +283,22 @@ namespace L3 {
         os << ")";
     }
 
-    vector <string> AssignCallInst::toL2(string &suffix) {
+    vector <string> AssignCallInst::toL2(const map<string, string> &labelMap) {
         vector <string> l2;
+        string calleeRetLabel = (callee[0] == ':' ? callee : ":" + callee) + "_ret" + to_string(++n);
         for (int i = 0; i < args.size() && i < argReg.size(); i++) {
             l2.push_back("(" + argReg[i] + " <- " + args[i] + ")");
         }
         bool isRunTime = callee == "print" || callee == "allocate" || callee == "array-error";
         if (!isRunTime) {
-            l2.push_back("((mem rsp -8) <- " + (callee[0] == ':' ? callee : ":" + callee) + "_ret" + suffix + ")");
+            l2.push_back("((mem rsp -8) <- " + calleeRetLabel + ")");
             for (int i = 6, sp = -16; i < args.size(); i++, sp -= 8) {
                 l2.push_back("(mem rsp " + to_string(sp) + ") <- " + args[i] + ")");
             }
         }
         l2.push_back("(call " + callee + " " + to_string(args.size()) + ")");
         if (!isRunTime) {
-            l2.push_back((callee[0] == ':' ? callee : ":" + callee) + "_ret" + suffix);
+            l2.push_back(calleeRetLabel);
         }
         if (!var.empty()) {
             l2.push_back("(" + var + " <- rax)");
@@ -347,7 +353,6 @@ namespace L3 {
     vector <string> Program::toL2() {
         vector <string> l2;
         set<string> programLabelSet;
-        int index = 0;
         l2.push_back("(" + name);
         for (auto const &f : functions) {
             set<string> functionLabelSet;
@@ -361,13 +366,22 @@ namespace L3 {
                 l2.push_back("        (" + f->arguments[i] + " <- (stack-arg " + to_string(sp) + "))");
             }
             for (auto const &inst : f->instructions) {
-                string idx = to_string(index++);
-                vector <string> instL2 = inst->toL2(idx);
+                if (LabelInst *lbInst = dynamic_cast<LabelInst *>(inst)) {
+                    if (programLabelSet.count(lbInst->label) > 0) {
+                        string newLabel = lbInst->label + "_" + f->name + "_";
+                        labelMap[lbInst->label] = newLabel;
+                        functionLabelSet.insert(newLabel);
+                    } else {
+                        functionLabelSet.insert(lbInst->label);
+                    }
+                }
+                vector <string> instL2 = inst->toL2(labelMap);
                 for (auto const &s : instL2) {
                     l2.push_back("        " + s);
                 }
             }
             l2.push_back("    )");
+            programLabelSet.insert(functionLabelSet.begin(), functionLabelSet.end());
         }
         l2.push_back(")");
         return l2;

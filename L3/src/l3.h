@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 #include "tree.h"
 
@@ -57,7 +58,7 @@ namespace L3 {
 
         virtual void print(ostream &os) = 0;
 
-        virtual vector <string> toL2(string &suffix) = 0;
+        virtual vector <string> toL2(const map<string, string> &labelMap) = 0;
 
         virtual TreeNode *getInstTree() = 0;
     };
@@ -71,7 +72,7 @@ namespace L3 {
 
         void print(ostream &os);
 
-        vector <string> toL2(string &suffix);
+        vector <string> toL2(const map<string, string> &labelMap);
 
         TreeNode *getInstTree();
     };
@@ -84,7 +85,7 @@ namespace L3 {
 
         void print(ostream &os);
 
-        vector <string> toL2(string &suffix);
+        vector <string> toL2(const map<string, string> &labelMap);
 
         TreeNode *getInstTree();
     };
@@ -97,7 +98,7 @@ namespace L3 {
 
         void print(ostream &os);
 
-        vector <string> toL2(string &suffix);
+        vector <string> toL2(const map<string, string> &labelMap);
 
         TreeNode *getInstTree();
     };
@@ -109,7 +110,7 @@ namespace L3 {
 
         void print(ostream &os);
 
-        vector <string> toL2(string &suffix);
+        vector <string> toL2(const map<string, string> &labelMap);
 
         TreeNode *getInstTree();
     };
@@ -121,7 +122,7 @@ namespace L3 {
 
         void print(ostream &os);
 
-        vector <string> toL2(string &suffix);
+        vector <string> toL2(const map<string, string> &labelMap);
 
         TreeNode *getInstTree();
     };
@@ -133,7 +134,7 @@ namespace L3 {
 
         void print(ostream &os);
 
-        vector <string> toL2(string &suffix);
+        vector <string> toL2(const map<string, string> &labelMap);
 
         TreeNode *getInstTree();
     };
@@ -145,7 +146,7 @@ namespace L3 {
 
         void print(ostream &os);
 
-        vector <string> toL2(string &suffix);
+        vector <string> toL2(const map<string, string> &labelMap);
 
         TreeNode *getInstTree();
     };
@@ -157,7 +158,7 @@ namespace L3 {
 
         void print(ostream &os);
 
-        vector <string> toL2(string &suffix);
+        vector <string> toL2(const map<string, string> &labelMap);
 
         TreeNode *getInstTree();
     };
@@ -170,7 +171,7 @@ namespace L3 {
 
         void print(ostream &os);
 
-        vector <string> toL2(string &suffix);
+        vector <string> toL2(const map<string, string> &labelMap);
 
         TreeNode *getInstTree();
     };

@@ -59,16 +59,12 @@ namespace IR {
     }
 
     void LabelInst::print(ostream &os) {
-        if (lb == ":entry") {
-            os << lb << genRandStr(2);
-        } else {
-            os << lb;
-        }
+        os << lb;
     }
 
     vector <string> LabelInst::toL3(const map <string, Type> &varMap) {
         vector <string> l3;
-        l3.push_back(lb == ":entry" ? lb + genRandStr(2) : lb);
+        l3.push_back(lb);
         return l3;
     }
 
