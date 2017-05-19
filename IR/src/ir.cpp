@@ -82,7 +82,7 @@ namespace IR {
         if (t.empty()) {
             os << "br " << lb;
         } else {
-            os << "br " << strip(t) << " " << lb << " " << rb;
+            os << "br " << t << " " << lb << " " << rb;
         }
     }
 
@@ -101,10 +101,9 @@ namespace IR {
     }
 
     void ReturnInst::print(ostream &os) {
-        if (t.empty()) {
-            os << "return";
-        } else {
-            os << "return " << strip(t);
+        os << "return";
+        if (!t.empty()) {
+            os << " " << t;
         }
     }
 
@@ -124,7 +123,7 @@ namespace IR {
     }
 
     void TypeInst::print(ostream &os) {
-        //os << ";" << type.toString() << " " << var;
+        os << type.toString() << " " << var;
     }
 
     vector <string> TypeInst::toL3(const map <string, Type> &varMap) {
@@ -151,9 +150,16 @@ namespace IR {
 
     void AssignInst::print(ostream &os) {
         if (!varIndex.empty()) {
-//            os << "assign instruction var index not empty";
+            os << var;
+            for (auto const &idx : varIndex) {
+                os << "[" << idx << "]";
+            }
+            os << " <- " << s;
         } else if (!sIndex.empty()) {
-//            os << "assign instruction s index not empty";
+            os << var << " <- " << s;
+            for (auto const &idx : sIndex) {
+                os << "[" << idx << "]";
+            }
         } else {
             os << strip(var) << " <- " << strip(s);
         }
@@ -211,7 +217,7 @@ namespace IR {
     }
 
     void AssignOpInst::print(ostream &os) {
-        os << strip(var) << " <- " << strip(lt) << " " << opToString(op) << " " << strip(rt);
+        os << var << " <- " << lt << " " << opToString(op) << " " << rt;
     }
 
     vector <string> AssignOpInst::toL3(const map <string, Type> &varMap) {
@@ -227,11 +233,7 @@ namespace IR {
     }
 
     void AssignLengthInst::print(ostream &os) {
-        string offset = "addr_" + genRandStr(2);
-        os << offset << " <- " << strip(t) << " * 8" << endl
-           << "    " << offset << " <- " << offset << " + 16" << endl
-           << "    " << offset << " <- " << offset << " + " << strip(rv) << endl
-           << "    " << strip(lv) << " <- load " << offset;
+        os << lv << " <- length " << rv << " " << t;
     }
 
     vector <string> AssignLengthInst::toL3(const map <string, Type> &varMap) {
@@ -261,14 +263,14 @@ namespace IR {
 
     void AssignCallInst::print(ostream &os) {
         if (!var.empty()) {
-            os << strip(var) << " <- ";
+            os << var << " <- ";
         }
-        os << "call " << strip(callee) << "(";
+        os << "call " << callee << "(";
         for (int i = 0; i < args.size(); i++) {
             if (i == 0) {
-                os << strip(args[i]);
+                os << args[i];
             } else {
-                os << ", " << strip(args[i]);
+                os << ", " << args[i];
             }
         }
         os << ")";
@@ -299,22 +301,14 @@ namespace IR {
     }
 
     void NewArrayInst::print(ostream &os) {
-        string count = "cnt_" + genRandStr(2), d = "dim_" + genRandStr(2), addr = "addr_" + genRandStr(2);
-        os << count << " <- 1" << endl;
-        for (auto const &arg : args) {
-            os << "    " << d << " <- " << strip(arg) << " >> 1" << endl
-               << "    " << count << " <- " << count << " * " << d << endl;
+        os << var << " <- new Array(";
+        for (int i = 0; i < args.size(); i++) {
+            if (i > 0) {
+                os << ", ";
+            }
+            os << args[i];
         }
-        os << "    " << count << " <- " << count << " + " << args.size() << endl
-           << "    " << count << " <- " << count << " << 1" << endl
-           << "    " << count << " <- " << count << " + 3" << endl
-           << "    " << strip(var) << " <- call allocate(" << count << ", 1)" << endl
-           << "    " << addr << " <- " << strip(var) << " + 8" << endl
-           << "    " << "store " << addr << " <- " << args.size() * 2 + 1 << endl;
-        for (auto const &arg : args) {
-            os << "    " << addr << " <- " << addr << " + 8" << endl
-               << "    " << "store " << addr << " <- " << strip(arg) << endl;
-        }
+        os << ")";
     }
 
     vector <string> NewArrayInst::toL3(const map <string, Type> &varMap) {
@@ -348,7 +342,7 @@ namespace IR {
     }
 
     void NewTupleInst::print(ostream &os) {
-        os << strip(var) << " <- call allocate(" << strip(t) << ", 1)" << endl;
+        os << var << " <- new Tuple(" << t << ")";
     }
 
     vector <string> NewTupleInst::toL3(const map <string, Type> &varMap) {
