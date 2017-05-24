@@ -1,0 +1,55 @@
+int64 checkCube(int64[][][] %A, int64 %v) {
+    int64 %l0
+    int64 %l1
+    int64 %l2
+    %l0 <- length %A 0
+    %l1 <- length %A 1
+    %l2 <- length %A 2
+
+    int64 %result
+    %result <- 0
+    %check
+    int64 %index0
+    int64 %index1
+    int64 %index2
+
+    :loop_start0
+    %check <- %index0 < %l0
+    br %check :loop_next0 :loop_end0
+    :loop_next0
+
+    :loop_start1
+    %check <- %index1 < %l1
+    br %check :loop_next1 :loop_end1
+    :loop_next1
+
+    :loop_start2
+    %check <- %index2 < %l2
+    br %check :loop_next2 :loop_end2
+    :loop_next2
+
+    int64 %v
+    %x <- %A[%index0][%index1][%index2]
+    %check <- %x = %v
+    br %check :found_exit :not_found
+
+    :not_found
+    %index2 <- %index2 + 1
+    br :loop_start2
+
+    :loop_end2
+    %index2 <- 0
+    %index1 <- %index1 + 1
+    br :loop_start1
+
+    :loop_end1
+    %index1 <- 0
+    %index0 <- %index0 + 1
+    br :loop_start0
+
+    :found_exit
+    %result <- 1
+
+    :loop_end0
+    return %result
+}
