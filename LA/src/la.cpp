@@ -173,7 +173,7 @@ namespace LA {
 
     vector <string> AssignInst::toIR(set <string> &nVarSet) {
         vector <string> ir;
-        vector <string> &indices = varIndex;
+        vector <string> indices;
         string v;
         if (!varIndex.empty()) {
             indices = varIndex;
