@@ -193,7 +193,8 @@ namespace LA {
                 }
                 nIndices.push_back(nIdx);
             }
-            stringstream ss(v);
+            stringstream ss;
+            ss << v;
             for (auto const &nIdx : nIndices) {
                 ss << "[" << nIdx << "]";
             }
