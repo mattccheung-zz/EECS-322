@@ -200,7 +200,7 @@ namespace LA {
                 nIndices.push_back(nIdx);
             }
             string arrayCheck = "%_array_check_", errorIdx = "%_error_index_", lenCheck = "%_len_check_",
-                    arrayErrorLabel = ":_array_error_" + genRandStr(4) + "_", nextInst = ":_next_inst_";
+                    arrayErrorLabel = ":array_error_" + genRandStr(4) + "_", nextInst = ":_next_inst_";
             string nextInstLabel;
             nVarSet.insert(arrayCheck);
             varMap[arrayCheck] = Type("int64");
@@ -227,8 +227,7 @@ namespace LA {
             ir.push_back("br " + nextInstLabel);
             ir.push_back(arrayErrorLabel);
             ir.push_back("call array-error(" + v + ", " + errorIdx + ")");
-            //ir.push_back("br" + nextInstLabel);
-            ir.push_back("return");
+            ir.push_back("br" + nextInstLabel);
             ir.push_back(nextInstLabel);
             stringstream ss;
             ss << v;

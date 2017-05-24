@@ -404,14 +404,21 @@ void* allocate_helper(int64_t fw_size, int64_t *fw_fill, int64_t *rsp)
 /*
  * The "array-error" runtime function
  */
-int array_error(int64_t *array, int64_t fw_x) {
-   printf("attempted to use position %" PRId64
-	  " in an array that only has %" PRId64
-	  " position",
-          fw_x >> 1, *array);
-   if (*array != 1) printf("s");
-   printf("\n");
-   exit(0);
+int array_error (int64_t *array, int64_t fw_x) {
+  if (array == NULL){
+    printf("attempted to access an array or tuple, which has not been allocated\n");
+    exit(0);
+  }
+  int64_t decodedV = fw_x >> 1;
+  printf("attempted to use position %" PRId64, decodedV);
+  if (decodedV >= *array){
+    printf(" in an array that only has %" PRId64 " position", *array);
+    if (*array != 1) printf("s");
+  } else {
+    printf(" (linearized array length: %" PRId64 ")", *array);
+  }
+  printf("\n");
+  exit(0);
 }
 
 /*
