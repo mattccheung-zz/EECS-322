@@ -227,6 +227,10 @@ namespace LA {
             nVarSet.insert(nlt += "_decoded_");
             ir.push_back(nlt + " <- " + lt + " >> 1");
         }
+        if (!isNum(rt)) {
+            nVarSet.insert(nrt += "_decoded_");
+            ir.push_back(nrt + " <- " + rt + " >> 1");
+        }
         ir.push_back(var + " <- " + nlt + " " + opToString(op) + " " + nrt);
         ir.push_back(var + " <- " + var + " << 1");
         ir.push_back(var + " <- " + var + " + 1");
