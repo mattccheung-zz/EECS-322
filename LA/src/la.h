@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include <map>
+#include <set>
 
 
 using namespace std;
@@ -76,7 +76,7 @@ namespace LA {
 
         virtual void print(ostream &os) = 0;
 
-        virtual vector <string> toIR(const map<string, Type> &varMap) = 0;
+        virtual vector <string> toIR(set<string> &nVarSet) = 0;
     };
 
     ostream &operator<<(ostream &os, Instruction &inst);
@@ -90,7 +90,7 @@ namespace LA {
 
         void print(ostream &os);
 
-        vector <string> toIR(const map<string, Type> &varMap);
+        vector <string> toIR(set<string> &nVarSet);
     };
 
     struct BranchInst : public Instruction {
@@ -104,7 +104,7 @@ namespace LA {
 
         void print(ostream &os);
 
-        vector <string> toIR(const map<string, Type> &varMap);
+        vector <string> toIR(set<string> &nVarSet);
     };
 
     struct ReturnInst : public Instruction {
@@ -118,7 +118,7 @@ namespace LA {
 
         void print(ostream &os);
 
-        vector <string> toIR(const map<string, Type> &varMap);
+        vector <string> toIR(set<string> &nVarSet);
     };
 
     struct TypeInst : public Instruction {
@@ -131,7 +131,7 @@ namespace LA {
 
         void print(ostream &os);
 
-        vector <string> toIR(const map<string, Type> &varMap);
+        vector <string> toIR(set<string> &nVarSet);
     };
 
     struct AssignInst : public Instruction {
@@ -148,7 +148,7 @@ namespace LA {
 
         void print(ostream &os);
 
-        vector <string> toIR(const map<string, Type> &varMap);
+        vector <string> toIR(set<string> &nVarSet);
     };
 
     struct AssignOpInst : public Instruction {
@@ -161,7 +161,7 @@ namespace LA {
 
         void print(ostream &os);
 
-        vector <string> toIR(const map<string, Type> &varMap);
+        vector <string> toIR(set<string> &nVarSet);
     };
 
     struct AssignLengthInst : public Instruction {
@@ -173,7 +173,7 @@ namespace LA {
 
         void print(ostream &os);
 
-        vector <string> toIR(const map<string, Type> &varMap);
+        vector <string> toIR(set<string> &nVarSet);
     };
 
     struct AssignCallInst : public Instruction {
@@ -188,7 +188,7 @@ namespace LA {
 
         void print(ostream &os);
 
-        vector <string> toIR(const map<string, Type> &varMap);
+        vector <string> toIR(set<string> &nVarSet);
     };
 
     struct NewArrayInst : public Instruction {
@@ -201,7 +201,7 @@ namespace LA {
 
         void print(ostream &os);
 
-        vector <string> toIR(const map<string, Type> &varMap);
+        vector <string> toIR(set<string> &nVarSet);
     };
 
     struct NewTupleInst : public Instruction {
@@ -213,7 +213,7 @@ namespace LA {
 
         void print(ostream &os);
 
-        vector <string> toIR(const map<string, Type> &varMap);
+        vector <string> toIR(set<string> &nVarSet);
     };
 
     struct Function {
