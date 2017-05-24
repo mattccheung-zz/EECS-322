@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <set>
 #include <cassert>
+#include <map>
 
 #include "la.h"
 
@@ -16,6 +17,10 @@ namespace LA {
 
     inline bool isNum(const string &s) {
         return s[0] == '+' || s[0] == '-' || (s[0] >= '0' && s[0] <= '9');
+    }
+
+    inline bool isVar(const string &s) {
+        return s[0] == '%';
     }
 
     inline string encode(const string &s) {
@@ -70,7 +75,7 @@ namespace LA {
         os << lb;
     }
 
-    vector <string> LabelInst::toIR(set <string> &nVarSet) {
+    vector <string> LabelInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
         return {lb};
     }
 
@@ -92,7 +97,7 @@ namespace LA {
         }
     }
 
-    vector <string> BranchInst::toIR(set <string> &nVarSet) {
+    vector <string> BranchInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
         vector <string> ir;
         if (t.empty()) {
             ir.push_back("br " + lb);
@@ -116,7 +121,7 @@ namespace LA {
         }
     }
 
-    vector <string> ReturnInst::toIR(set <string> &nVarSet) {
+    vector <string> ReturnInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
         return {t.empty() ? "return" : "return " + t};
     }
 
@@ -129,7 +134,8 @@ namespace LA {
         os << type.toString() << " " << var;
     }
 
-    vector <string> TypeInst::toIR(set <string> &nVarSet) {
+    vector <string> TypeInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
+        varMap[var] = type;
         vector <string> ir = {type.toString() + " " + var};
         if (type.type == TUPLE || type.dim > 0) {
             ir.push_back(var + " <- 0");
@@ -171,7 +177,7 @@ namespace LA {
         }
     }
 
-    vector <string> AssignInst::toIR(set <string> &nVarSet) {
+    vector <string> AssignInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
         vector <string> ir;
         vector <string> indices;
         string v;
@@ -183,16 +189,47 @@ namespace LA {
             v = s;
         }
         if (!v.empty()) {
-            //TODO: array access check
             vector <string> nIndices;
             for (auto const &idx : indices) {
                 string nIdx = idx;
                 if (!isNum(idx)) {
                     nVarSet.insert(nIdx += "_decoded_");
+                    varMap[nIdx] = Type("int64");
                     ir.push_back(nIdx + " <- " + idx + " >> 1");
                 }
                 nIndices.push_back(nIdx);
             }
+            string arrayCheck = "%_array_check_", errorIdx = "%_error_index_", lenCheck = "%_len_check_",
+                    arrayErrorLabel = ":_array_error_" + genRandStr(4) + "_", nextInst = ":_next_inst_";
+            string nextInstLabel;
+            nVarSet.insert(arrayCheck);
+            varMap[arrayCheck] = Type("int64");
+            nVarSet.insert(errorIdx);
+            varMap[errorIdx] = Type("int64");
+            nVarSet.insert(lenCheck);
+            varMap[lenCheck] = Type("int64");
+            ir.push_back(errorIdx + " <- 0");
+            ir.push_back(arrayCheck + " <- " + v + " = 0");
+            nextInstLabel = nextInst + genRandStr(4) + "_";
+            ir.push_back("br " + arrayCheck + " " + arrayErrorLabel + " " + nextInstLabel);
+            ir.push_back(nextInstLabel);
+            if (varMap.at(v).dim > 0) {
+                for (int i = 0; i < indices.size(); i++) {
+                    ir.push_back(errorIdx + " <- " + encodeIfNum(indices[i]));
+                    ir.push_back(lenCheck + " <- length " + v + " " + to_string(i));
+                    ir.push_back(arrayCheck + " <- " + encodeIfNum(indices[i]) + " >= " + lenCheck);
+                    nextInstLabel = nextInst + genRandStr(4) + "_";
+                    ir.push_back("br " + arrayCheck + " " + arrayErrorLabel + " " + nextInstLabel);
+                    ir.push_back(nextInstLabel);
+                }
+            }
+            nextInstLabel = nextInst + genRandStr(4) + "_";
+            ir.push_back("br " + nextInstLabel);
+            ir.push_back(arrayErrorLabel);
+            ir.push_back("call array-error(" + v + ", " + errorIdx + ")");
+            //ir.push_back("br" + nextInstLabel);
+            ir.push_back("return");
+            ir.push_back(nextInstLabel);
             stringstream ss;
             ss << v;
             for (auto const &nIdx : nIndices) {
@@ -220,15 +257,17 @@ namespace LA {
         os << var << " <- " << lt << " " << opToString(op) << " " << rt;
     }
 
-    vector <string> AssignOpInst::toIR(set <string> &nVarSet) {
+    vector <string> AssignOpInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
         vector <string> ir;
         string nlt = lt, nrt = rt;
         if (!isNum(lt)) {
             nVarSet.insert(nlt += "_decoded_");
+            varMap[nlt] = Type("int64");
             ir.push_back(nlt + " <- " + lt + " >> 1");
         }
         if (!isNum(rt)) {
             nVarSet.insert(nrt += "_decoded_");
+            varMap[nrt] = Type("int64");
             ir.push_back(nrt + " <- " + rt + " >> 1");
         }
         ir.push_back(var + " <- " + nlt + " " + opToString(op) + " " + nrt);
@@ -247,11 +286,12 @@ namespace LA {
         os << lv << " <- length " << rv << " " << t;
     }
 
-    vector <string> AssignLengthInst::toIR(set <string> &nVarSet) {
+    vector <string> AssignLengthInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
         vector <string> ir;
         string nt = t;
         if (!isNum(t)) {
             nVarSet.insert(nt += "_decoded_");
+            varMap[nt] = Type("int64");
             ir.push_back(nt + " <- " + t + " >> 1");
         }
         ir.push_back(lv + " <- length " + rv + " " + nt);
@@ -283,12 +323,12 @@ namespace LA {
         os << ")";
     }
 
-    vector <string> AssignCallInst::toIR(set <string> &nVarSet) {
+    vector <string> AssignCallInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
         stringstream ss;
         if (!var.empty()) {
             ss << var << " <- ";
         }
-        ss << "call " << (isRunTime(callee) ? callee : ":" + callee) << "(";
+        ss << "call " << (isVar(callee) || isRunTime(callee) ? callee : ":" + callee) << "(";
         for (int i = 0; i < args.size(); i++) {
             if (i > 0) {
                 ss << ", ";
@@ -315,7 +355,7 @@ namespace LA {
         os << ")";
     }
 
-    vector <string> NewArrayInst::toIR(set <string> &nVarSet) {
+    vector <string> NewArrayInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
         stringstream ss;
         ss << var << " <- new Array(";
         for (int i = 0; i < args.size(); i++) {
@@ -337,7 +377,7 @@ namespace LA {
         os << var << " <- new Tuple(" << t << ")";
     }
 
-    vector <string> NewTupleInst::toIR(set <string> &nVarSet) {
+    vector <string> NewTupleInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
         return {var + " <- new Tuple(" + encodeIfNum(t) + ")"};
     }
 
@@ -351,6 +391,7 @@ namespace LA {
     }
 
     string Function::toIR() {
+        map<string, Type> varMap;
         set<string> nVarSet;
         stringstream ss;
         ss << "define " << returnType.toString() << " :" << name << "(";
@@ -359,6 +400,7 @@ namespace LA {
                 ss << ", ";
             }
             ss << arguments[i]->type.toString() << " " << arguments[i]->var;
+            varMap[arguments[i]->var] = arguments[i]->type;
         }
         ss << ") {" << endl;
         vector <string> irs;
@@ -372,7 +414,7 @@ namespace LA {
             } else if (LabelInst *labelInst = dynamic_cast<LabelInst *>(inst)) {
                 irs.push_back("br " + labelInst->lb);
             }
-            vector<string> tmp = inst->toIR(nVarSet);
+            vector<string> tmp = inst->toIR(nVarSet, varMap);
             irs.insert(irs.end(), tmp.begin(), tmp.end());
             if (dynamic_cast<BranchInst *>(inst) || dynamic_cast<ReturnInst *>(inst)) {
                 startBasicBlock = true;
