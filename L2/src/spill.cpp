@@ -38,7 +38,7 @@ namespace L2 {
                 }
                 func->instructions.push_back(nInst);
             } else {
-                string nv = sp + to_string(++index);
+                string nv = sp + "_nv_" + to_string(++index);
                 if (!(matched_num == 1 && inst->operators[0] == Operator_Type::MOVQ && inst->operands[0] == sp)) {
                     Instruction *preInst = new Instruction;
                     preInst->operators = {Operator_Type::MOVQ, Operator_Type::MEM};

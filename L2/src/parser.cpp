@@ -379,6 +379,9 @@ namespace L2 {
             for (auto const &d : p.functions.back()->instructions.back()->operands) {
                 cout << d << " ";
             }
+            for (auto const &d : p.functions.back()->instructions.back()->operators) {
+                cout << d << " ";
+            }
             cout << in.string() << endl;
 #endif
         }
