@@ -375,6 +375,8 @@ namespace L3 {
                         functionLabelSet.insert(lbInst->label);
                     }
                 }
+            }
+            for (auto const &inst : f->instructions) {
                 for (auto const &s : inst->toL2(labelMap)) {
                     l2.push_back("        " + s);
                 }
