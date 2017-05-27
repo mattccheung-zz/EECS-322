@@ -5,6 +5,7 @@
 #include <iostream>
 #include <set>
 #include <map>
+#include <utility>
 
 
 using namespace std;
@@ -76,66 +77,22 @@ namespace LB {
         virtual ~Instruction() {};
 
         virtual void print(ostream &os) = 0;
-
-        virtual vector <string> toIR(set <string> &nVarSet, map<string, Type> &varMap) = 0;
     };
 
     ostream &operator<<(ostream &os, Instruction &inst);
 
-    struct LabelInst : public Instruction {
-        string lb;
-
-        LabelInst(const string &s);
-
-        ~LabelInst() {};
-
-        void print(ostream &os);
-
-        vector <string> toIR(set <string> &nVarSet, map<string, Type> &varMap);
-    };
-
-    struct BranchInst : public Instruction {
-        string t, lb, rb;
-
-        BranchInst(const string &s);
-
-        BranchInst(const string &t, const string &lb, const string &rb);
-
-        ~BranchInst() {};
-
-        void print(ostream &os);
-
-        vector <string> toIR(set <string> &nVarSet, map<string, Type> &varMap);
-    };
-
-    struct ReturnInst : public Instruction {
-        string t;
-
-        ReturnInst() {};
-
-        ReturnInst(const string &s);
-
-        ~ReturnInst() {};
-
-        void print(ostream &os);
-
-        vector <string> toIR(set <string> &nVarSet, map<string, Type> &varMap);
-    };
-
-    struct TypeInst : public Instruction {
+    struct TypeInst : Instruction {
         Type type;
-        string var;
+        vector<string> vars;
 
-        TypeInst(const string &t, const string &s);
+        TypeInst(const string &t, const vector<string> &vars);
 
         ~TypeInst() {};
 
         void print(ostream &os);
-
-        vector <string> toIR(set <string> &nVarSet, map<string, Type> &varMap);
     };
 
-    struct AssignInst : public Instruction {
+    struct AssignInst : Instruction {
         string var, s;
         vector <string> varIndex, sIndex;
 
@@ -148,24 +105,74 @@ namespace LB {
         ~AssignInst() {};
 
         void print(ostream &os);
-
-        vector <string> toIR(set <string> &nVarSet, map<string, Type> &varMap);
     };
 
-    struct AssignOpInst : public Instruction {
+    struct AssignCondInst : Instruction {
         string var, lt, rt;
         OP op;
 
-        AssignOpInst(const string &var, const string &lt, const string &rt, const string &op);
+        AssignCondInst(const string &var, const string &lt, const string &op, const string &rt);
 
-        ~AssignOpInst() {};
+        ~AssignCondInst() {};
 
         void print(ostream &os);
-
-        vector <string> toIR(set <string> &nVarSet, map<string, Type> &varMap);
     };
 
-    struct AssignLengthInst : public Instruction {
+    struct LabelInst : Instruction {
+        string lb;
+
+        LabelInst(const string &s);
+
+        ~LabelInst() {};
+
+        void print(ostream &os);
+    };
+
+    struct IfInst : Instruction {
+        string lt, rt, lb, rb;
+        OP op;
+
+        IfInst(const string &lt, const string &op, const string &rt, const string &lb, const string &rb);
+
+        ~IfInst() {};
+
+        void print(ostream &os);
+    };
+
+    struct ReturnInst : Instruction {
+        string t;
+
+        ReturnInst(const string &s);
+
+        ~ReturnInst() {};
+
+        void print(ostream &os);
+    };
+
+    struct WhileInst : Instruction {
+        string lt, rt, lb, rb;
+        OP op;
+
+        WhileInst(const string &lt, const string &op, const string &rt, const string &lb, const string &rb);
+
+        ~WhileInst() {};
+
+        void print(ostream &os);
+    };
+
+    struct ContinueInst : Instruction {
+        ~ContinueInst() {};
+
+        void print(ostream &os);
+    };
+
+    struct BreakInst : Instruction {
+        ~BreakInst() {};
+
+        void print(ostream &os);
+    };
+
+    struct AssignLengthInst : Instruction {
         string lv, rv, t;
 
         AssignLengthInst(const string &lv, const string &rv, const string &t);
@@ -173,26 +180,20 @@ namespace LB {
         ~AssignLengthInst() {};
 
         void print(ostream &os);
-
-        vector <string> toIR(set <string> &nVarSet, map<string, Type> &varMap);
     };
 
-    struct AssignCallInst : public Instruction {
+    struct AssignCallInst : Instruction {
         string var, callee;
         vector <string> args;
-
-        AssignCallInst(const string &c, const vector <string> &as);
 
         AssignCallInst(const string &v, const string &c, const vector <string> &as);
 
         ~AssignCallInst() {};
 
         void print(ostream &os);
-
-        vector <string> toIR(set <string> &nVarSet, map<string, Type> &varMap);
     };
 
-    struct NewArrayInst : public Instruction {
+    struct NewArrayInst : Instruction {
         string var;
         vector <string> args;
 
@@ -201,11 +202,9 @@ namespace LB {
         ~NewArrayInst() {};
 
         void print(ostream &os);
-
-        vector <string> toIR(set <string> &nVarSet, map<string, Type> &varMap);
     };
 
-    struct NewTupleInst : public Instruction {
+    struct NewTupleInst : Instruction {
         string var, t;
 
         NewTupleInst(const string &v, const string &t);
@@ -213,19 +212,25 @@ namespace LB {
         ~NewTupleInst() {};
 
         void print(ostream &os);
+    };
 
-        vector <string> toIR(set <string> &nVarSet, map<string, Type> &varMap);
+    struct Scope;
+    struct Scope : Instruction {
+        vector<Instruction *> instructions;
+        Scope *parent;
+
+        ~Scope();
+
+        void print(ostream &os);
     };
 
     struct Function {
         string name;
         Type returnType;
-        vector<TypeInst *> arguments;
-        vector<Instruction *> instructions;
+        vector<pair<Type, string>> arguments;
+        Scope *scope;
 
         ~Function();
-
-        string toIR();
     };
 
     struct Program {
@@ -233,8 +238,6 @@ namespace LB {
         vector<Function *> functions;
 
         ~Program();
-
-        string toIR();
     };
 }
 

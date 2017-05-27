@@ -34,7 +34,6 @@ int main(int argc, char **argv) {
     ofstream output;
     output.open("prog.a");
     Program p = ParseFile(argv[optind]);
-    output << p.toIR() << endl;
     output.close();
     return 0;
 }

@@ -23,14 +23,6 @@ namespace LB {
         return s[0] == '%';
     }
 
-    inline string encode(const string &s) {
-        return to_string(stoll(s) * 2 + 1);
-    }
-
-    inline string encodeIfNum(const string &s) {
-        return isNum(s) ? encode(s) : s;
-    }
-
     string genRandStr(int len) {
         static const char alphahum[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
         static bool flag = false;
@@ -67,80 +59,22 @@ namespace LB {
         return os;
     }
 
-    LabelInst::LabelInst(const string &s) {
-        lb = s;
-    }
-
-    void LabelInst::print(ostream &os) {
-        os << lb;
-    }
-
-    vector <string> LabelInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
-        return {lb};
-    }
-
-    BranchInst::BranchInst(const string &s) {
-        lb = s;
-    }
-
-    BranchInst::BranchInst(const string &t, const string &lb, const string &rb) {
-        this->t = t;
-        this->lb = lb;
-        this->rb = rb;
-    }
-
-    void BranchInst::print(ostream &os) {
-        if (t.empty()) {
-            os << "br " << lb;
-        } else {
-            os << "br " << t << " " << lb << " " << rb;
-        }
-    }
-
-    vector <string> BranchInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
-        vector <string> ir;
-        if (t.empty()) {
-            ir.push_back("br " + lb);
-        } else {
-            if (!isNum(t)) {
-                ir.push_back(t + " <- " + t + " >> 1");
-            }
-            ir.push_back("br " + t + " " + lb + " " + rb);
-        }
-        return ir;
-    }
-
-    ReturnInst::ReturnInst(const string &s) {
-        t = s;
-    }
-
-    void ReturnInst::print(ostream &os) {
-        os << "return";
-        if (!t.empty()) {
-            os << " " << t;
-        }
-    }
-
-    vector <string> ReturnInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
-        return {t.empty() ? "return" : "return " + t};
-    }
-
-    TypeInst::TypeInst(const string &t, const string &v) {
+    TypeInst::TypeInst(const string &t, const vector<string> &vars) {
         type = Type(t);
-        var = v;
+        this->vars = vars;
     }
 
     void TypeInst::print(ostream &os) {
-        os << type.toString() << " " << var;
-    }
-
-    vector <string> TypeInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
-        varMap[var] = type;
-        vector <string> ir = {type.toString() + " " + var};
-        if (type.type == TUPLE || type.dim > 0) {
-            ir.push_back(var + " <- 0");
+        os << type.toString() << " ";
+        bool flag = false;
+        for (auto const &var : vars) {
+            if (flag) {
+                os << ", ";
+            } else {
+                flag = true;
+            }
+            os << var;
         }
-        return ir;
     }
 
     AssignInst::AssignInst(const string &v, const string &s) {
@@ -177,102 +111,66 @@ namespace LB {
         }
     }
 
-    vector <string> AssignInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
-        vector <string> ir;
-        vector <string> indices;
-        string v;
-        if (!varIndex.empty()) {
-            indices = varIndex;
-            v = var;
-        } else if (!sIndex.empty()) {
-            indices = sIndex;
-            v = s;
-        }
-        if (!v.empty()) {
-            vector <string> nIndices;
-            for (auto const &idx : indices) {
-                string nIdx = idx;
-                if (!isNum(idx)) {
-                    nVarSet.insert(nIdx += "_decoded_");
-                    varMap[nIdx] = Type("int64");
-                    ir.push_back(nIdx + " <- " + idx + " >> 1");
-                }
-                nIndices.push_back(nIdx);
-            }
-            string arrayCheck = "%_array_check_", errorIdx = "%_error_index_", lenCheck = "%_len_check_",
-                    arrayErrorLabel = ":array_error_" + genRandStr(4) + "_", nextInst = ":_next_inst_";
-            string nextInstLabel;
-            nVarSet.insert(arrayCheck);
-            varMap[arrayCheck] = Type("int64");
-            nVarSet.insert(errorIdx);
-            varMap[errorIdx] = Type("int64");
-            nVarSet.insert(lenCheck);
-            varMap[lenCheck] = Type("int64");
-            ir.push_back(errorIdx + " <- 0");
-            ir.push_back(arrayCheck + " <- " + v + " = 0");
-            nextInstLabel = nextInst + genRandStr(4) + "_";
-            ir.push_back("br " + arrayCheck + " " + arrayErrorLabel + " " + nextInstLabel);
-            ir.push_back(nextInstLabel);
-            if (varMap.at(v).dim > 0) {
-                for (int i = 0; i < indices.size(); i++) {
-                    ir.push_back(errorIdx + " <- " + encodeIfNum(indices[i]));
-                    ir.push_back(lenCheck + " <- length " + v + " " + to_string(i));
-                    ir.push_back(arrayCheck + " <- " + encodeIfNum(indices[i]) + " >= " + lenCheck);
-                    nextInstLabel = nextInst + genRandStr(4) + "_";
-                    ir.push_back("br " + arrayCheck + " " + arrayErrorLabel + " " + nextInstLabel);
-                    ir.push_back(nextInstLabel);
-                }
-            }
-            nextInstLabel = nextInst + genRandStr(4) + "_";
-            ir.push_back("br " + nextInstLabel);
-            ir.push_back(arrayErrorLabel);
-            ir.push_back("call array-error(" + v + ", " + errorIdx + ")");
-            ir.push_back("br" + nextInstLabel);
-            ir.push_back(nextInstLabel);
-            stringstream ss;
-            ss << v;
-            for (auto const &nIdx : nIndices) {
-                ss << "[" << nIdx << "]";
-            }
-            if (!varIndex.empty()) {
-                ir.push_back(ss.str() + " <- " + encodeIfNum(s));
-            } else {
-                ir.push_back(var + " <- " + ss.str());
-            }
-        } else {
-            ir.push_back(var + " <- " + encodeIfNum(s));
-        }
-        return ir;
-    }
-
-    AssignOpInst::AssignOpInst(const string &var, const string &lt, const string &rt, const string &op) {
+    AssignCondInst::AssignCondInst(const string &var, const string &lt, const string &op, const string &rt) {
         this->var = var;
         this->lt = lt;
         this->rt = rt;
         this->op = parseOp(op);
     }
 
-    void AssignOpInst::print(ostream &os) {
+    void AssignCondInst::print(ostream &os) {
         os << var << " <- " << lt << " " << opToString(op) << " " << rt;
     }
 
-    vector <string> AssignOpInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
-        vector <string> ir;
-        string nlt = lt, nrt = rt;
-        if (!isNum(lt)) {
-            nVarSet.insert(nlt += "_decoded_");
-            varMap[nlt] = Type("int64");
-            ir.push_back(nlt + " <- " + lt + " >> 1");
+    LabelInst::LabelInst(const string &s) {
+        lb = s;
+    }
+
+    void LabelInst::print(ostream &os) {
+        os << lb;
+    }
+
+    IfInst::IfInst(const string &lt, const string &op, const string &rt, const string &lb, const string &rb) {
+        this->lt = lt;
+        this->rt = rt;
+        this->lb = lb;
+        this->rb = rb;
+        this->op = parseOp(op);
+    }
+
+    void IfInst::print(ostream &os) {
+        os << "if (" << lt << " " << opToString(op) << " " << rt << ") " << lb << " " << rb;
+    }
+
+    ReturnInst::ReturnInst(const string &s) {
+        t = s;
+    }
+
+    void ReturnInst::print(ostream &os) {
+        os << "return";
+        if (!t.empty()) {
+            os << " " << t;
         }
-        if (!isNum(rt)) {
-            nVarSet.insert(nrt += "_decoded_");
-            varMap[nrt] = Type("int64");
-            ir.push_back(nrt + " <- " + rt + " >> 1");
-        }
-        ir.push_back(var + " <- " + nlt + " " + opToString(op) + " " + nrt);
-        ir.push_back(var + " <- " + var + " << 1");
-        ir.push_back(var + " <- " + var + " + 1");
-        return ir;
+    }
+
+    WhileInst::WhileInst(const string &lt, const string &op, const string &rt, const string &lb, const string &rb) {
+        this->lt = lt;
+        this->rt = rt;
+        this->lb = lb;
+        this->rb = rb;
+        this->op = parseOp(op);
+    }
+
+    void WhileInst::print(ostream &os) {
+        os << "while (" << lt << " " << opToString(op) << " " << rt << ") " << lb << " " << rb;
+    }
+
+    void ContinueInst::print(ostream &os) {
+        os << "continue";
+    }
+
+    void BreakInst::print(ostream &os) {
+        os << "break";
     }
 
     AssignLengthInst::AssignLengthInst(const string &lv, const string &rv, const string &t) {
@@ -283,23 +181,6 @@ namespace LB {
 
     void AssignLengthInst::print(ostream &os) {
         os << lv << " <- length " << rv << " " << t;
-    }
-
-    vector <string> AssignLengthInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
-        vector <string> ir;
-        string nt = t;
-        if (!isNum(t)) {
-            nVarSet.insert(nt += "_decoded_");
-            varMap[nt] = Type("int64");
-            ir.push_back(nt + " <- " + t + " >> 1");
-        }
-        ir.push_back(lv + " <- length " + rv + " " + nt);
-        return ir;
-    }
-
-    AssignCallInst::AssignCallInst(const string &c, const vector <string> &as) {
-        callee = c;
-        args = as;
     }
 
     AssignCallInst::AssignCallInst(const string &v, const string &c, const vector <string> &as) {
@@ -322,22 +203,6 @@ namespace LB {
         os << ")";
     }
 
-    vector <string> AssignCallInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
-        stringstream ss;
-        if (!var.empty()) {
-            ss << var << " <- ";
-        }
-        ss << "call " << (isVar(callee) || isRunTime(callee) ? callee : ":" + callee) << "(";
-        for (int i = 0; i < args.size(); i++) {
-            if (i > 0) {
-                ss << ", ";
-            }
-            ss << encodeIfNum(args[i]);
-        }
-        ss << ")";
-        return {ss.str()};
-    }
-
     NewArrayInst::NewArrayInst(const string &v, const vector <string> as) {
         var = v;
         args = as;
@@ -354,19 +219,6 @@ namespace LB {
         os << ")";
     }
 
-    vector <string> NewArrayInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
-        stringstream ss;
-        ss << var << " <- new Array(";
-        for (int i = 0; i < args.size(); i++) {
-            if (i > 0) {
-                ss << ", ";
-            }
-            ss << encodeIfNum(args[i]);
-        }
-        ss << ")";
-        return {ss.str()};
-    }
-
     NewTupleInst::NewTupleInst(const string &v, const string &t) {
         var = v;
         this->t = t;
@@ -376,70 +228,23 @@ namespace LB {
         os << var << " <- new Tuple(" << t << ")";
     }
 
-    vector <string> NewTupleInst::toIR(set <string> &nVarSet, map<string, Type> &varMap) {
-        return {var + " <- new Tuple(" + encodeIfNum(t) + ")"};
-    }
-
-    Function::~Function() {
-        for (auto const &arg : arguments) {
-            delete arg;
-        }
+    Scope::~Scope() {
         for (auto const &inst : instructions) {
             delete inst;
         }
     }
 
-    string Function::toIR() {
-        map<string, Type> varMap;
-        set<string> nVarSet;
-        stringstream ss;
-        ss << "define " << returnType.toString() << " :" << name << "(";
-        for (int i = 0; i < arguments.size(); i++) {
-            if (i > 0) {
-                ss << ", ";
-            }
-            ss << arguments[i]->type.toString() << " " << arguments[i]->var;
-            varMap[arguments[i]->var] = arguments[i]->type;
-        }
-        ss << ") {" << endl;
-        vector <string> irs;
-        bool startBasicBlock = true;
-        for (auto const &inst : instructions) {
-            if (startBasicBlock) {
-                if (dynamic_cast<LabelInst *>(inst) == NULL) {
-                    irs.push_back(":_entry_" + genRandStr(4) + "_");
-                }
-                startBasicBlock = false;
-            } else if (LabelInst *labelInst = dynamic_cast<LabelInst *>(inst)) {
-                irs.push_back("br " + labelInst->lb);
-            }
-            vector<string> tmp = inst->toIR(nVarSet, varMap);
-            irs.insert(irs.end(), tmp.begin(), tmp.end());
-            if (dynamic_cast<BranchInst *>(inst) || dynamic_cast<ReturnInst *>(inst)) {
-                startBasicBlock = true;
-            }
-        }
-        for (auto const &nVar : nVarSet) {
-            irs.insert(irs.begin() + 1, "int64 " + nVar);
-        }
-        for (auto const &s : irs) {
-            ss << "    " << s << endl;
-        }
-        ss << "}" << endl;
-        return ss.str();
+    void Scope::print(ostream &os) {
+        throw runtime_error("scope print is not implemented");
+    }
+
+    Function::~Function() {
+        delete scope;
     }
 
     Program::~Program() {
         for (auto const &f : functions) {
             delete f;
         }
-    }
-
-    string Program::toIR() {
-        stringstream ss;
-        for (auto const &f : functions) {
-            ss << f->toIR() << endl;
-        }
-        return ss.str();
     }
 }

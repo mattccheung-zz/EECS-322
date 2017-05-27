@@ -40,7 +40,7 @@ namespace LB {
     struct sSeps : plus<sor<ascii::space, cmt>> {};
 
     struct op : sor<one<'+'>, one<'-'>, one<'*'>, one<'&'>, string<'<', '<'>, string<'>', '>'>,
-        one<'<'>, string<'<', '='>, one<'='>, string<'>', '='>, one<'>'>> {};
+        string<'<', '='>, one<'<'>, one<'='>, string<'>', '='>, one<'>'>> {};
     struct v : seq<plus<sor<alpha, one<'_'>>>, star<sor<alpha, one<'_'>, digit>>> {};
     struct name : v {};
     struct lb : seq<one<':'>, v> {};
@@ -57,9 +57,11 @@ namespace LB {
     struct tty : sor<kwTuple, kwCode, seq<kwInt64, star<opBrackets>>> {};
     struct type : tty {};
     struct T : sor<tty, kwVoid> {};
-    struct cond : seq<t, sSeps, op, sSeps, t> {};
+    struct cond : seq<t, wSeps, op, wSeps, t> {};
     struct varAccess : seq<var, plus<seq<wSeps, one<'['>, wSeps, t, wSeps, one<']'>>>> {};
     struct funcArgs : seq<type, sSeps, var, star<seq<wSeps, one<','>, wSeps, type, sSeps, var>>> {};
+    struct scopeStart : one<'{'> {};
+    struct scopeEnd: one<'}'> {};
 
     struct typeInst : seq<type, sSeps, vars> {};
     struct assignInst : seq<var, wSeps, opAssign, wSeps, s> {};
@@ -98,13 +100,15 @@ namespace LB {
         varToArrayInst,
         assignCondInst,
         assignInst> {};
-    struct scope : seq<one<'{'>, wSeps, inst, star<sSeps, inst>, wSeps, one<'}'>> {};
+    struct scope : seq<scopeStart, wSeps, inst, star<sSeps, inst>, wSeps, scopeEnd> {};
     struct fHead : seq<T, sSeps, name, wSeps, one<'('>, wSeps, opt<funcArgs>, wSeps, one<')'>> {};
     struct f : seq<fHead, wSeps, scope> {};
     struct p : seq<wSeps, f, star<seq<sSeps, f>>, wSeps> {};
 
 
     vector<std::string> operands;
+    Scope *funcScope = NULL;
+
 
     template<typename Rule>
     struct action : nothing<Rule> {};
@@ -175,164 +179,211 @@ namespace LB {
     template<>
     struct action<fHead> {
         static void apply(const input &in, Program &p) {
-//            assert(operands.size() % 2 == 0 && operands.size() >= 2);
-//            if (p.name.empty()) {
-//                p.name = operands[1];
-//            }
-//            Function *f = new Function;
-//            f->name = operands[1];
-//            f->returnType = Type(operands[0]);
-//            for (int i = 2; i < operands.size(); i += 2) {
-//                f->arguments.push_back(new TypeInst(operands[i], operands[i + 1]));
-//            }
-//            p.functions.push_back(f);
-//            operands.clear();
+            assert(operands.size() % 2 == 0 && operands.size() >= 2);
+            if (p.name.empty()) {
+                p.name = operands[1];
+            }
+            Function *f = new Function;
+            f->name = operands[1];
+            f->returnType = Type(operands[0]);
+            for (int i = 2; i < operands.size(); i += 2) {
+                f->arguments.push_back(make_pair(Type(operands[i]), operands[i + 1]));
+            }
+            p.functions.push_back(f);
+            operands.clear();
 #ifdef DEBUG
             n = 0;
-            //cout << "function " << f->name << endl;
+            cout << "function " << f->name << endl;
 #endif
+        }
+    };
+
+    template<>
+    struct action<scopeStart> {
+        static void apply(const input &in, Program &p) {
+#ifdef DEBUG
+            cout << ++n << "\t" << "{" << endl;
+#endif
+            if (funcScope == NULL) {
+                funcScope = new Scope();
+                funcScope->parent = NULL;
+            } else {
+                Scope *nScope = new Scope();
+                nScope->parent = funcScope;
+                funcScope->instructions.push_back(nScope);
+                funcScope = nScope;
+            }
+        }
+    };
+
+    template<>
+    struct action<scopeEnd> {
+        static void apply(const input &in, Program &p) {
+#ifdef DEBUG
+            cout << ++n << "\t" << "}" << endl;
+#endif
+            if (funcScope->parent == NULL) {
+                p.functions.back()->scope = funcScope;
+                funcScope = NULL;
+            } else {
+                funcScope = funcScope->parent;
+            }
         }
     };
 
     template<>
     struct action<typeInst> {
         static void apply(const input &in, Program &p) {
-//            assert(operands.size() == 2);
-//            p.functions.back()->instructions.push_back(new TypeInst(operands[0], operands[1]));
-//            operands.clear();
+            assert(operands.size() >= 2);
+            std::string type = operands[0];
+            operands.erase(operands.begin());
+            funcScope->instructions.push_back(new TypeInst(type, operands));
+            operands.clear();
         }
     };
 
     template<>
     struct action<assignInst> {
         static void apply(const input &in, Program &p) {
-//            p.functions.back()->instructions.push_back(new AssignInst(operands[operands.size() - 2], operands.back()));
-//            operands.clear();
+            funcScope->instructions.push_back(new AssignInst(operands[operands.size() - 2], operands.back()));
+            operands.clear();
         }
     };
 
     template<>
     struct action<assignCondInst> {
         static void apply(const input &in, Program &p) {
-//            p.functions.back()->instructions.push_back(new AssignOpInst(operands[operands.size() - 4], operands[operands.size() - 3],
-//                                                                        operands.back(), operands[operands.size() - 2]));
-//            operands.clear();
+            funcScope->instructions.push_back(new AssignCondInst(operands[operands.size() - 4],
+                                                               operands[operands.size() - 3],
+                                                               operands[operands.size() - 2], operands.back()));
+            operands.clear();
         }
     };
 
     template<>
     struct action<labelInst> {
         static void apply(const input &in, Program &p) {
-//            p.functions.back()->instructions.push_back(new LabelInst(in.string()));
-//            operands.clear();
+            funcScope->instructions.push_back(new LabelInst(in.string()));
+            operands.clear();
         }
     };
 
     template<>
     struct action<ifInst> {
         static void apply(const input &in, Program &p) {
-//            assert(operands.size() == 1);
-//            p.functions.back()->instructions.push_back(new BranchInst(operands[0]));
-//            operands.clear();
+            assert(operands.size() == 5);
+            funcScope->instructions.push_back(new IfInst(operands[0], operands[1], operands[2], operands[3], operands[4]));
+            operands.clear();
         }
     };
 
     template<>
     struct action<returnInst> {
         static void apply(const input &in, Program &p) {
-//            assert(operands.empty());
-//            p.functions.back()->instructions.push_back(new ReturnInst());
+            assert(operands.size() <= 1);
+            funcScope->instructions.push_back(new ReturnInst(operands.empty() ? "" : operands[0]));
+            operands.clear();
         }
     };
 
     template<>
     struct action<whileInst> {
         static void apply(const input &in, Program &p) {
+            assert(operands.size() == 5);
+            funcScope->instructions.push_back(new WhileInst(operands[0], operands[1], operands[2], operands[3], operands[4]));
+            operands.clear();
         }
     };
 
     template<>
     struct action<continueInst> {
         static void apply(const input &in, Program &p) {
+            assert(operands.empty());
+            funcScope->instructions.push_back(new ContinueInst());
+            operands.clear();
         }
     };
 
     template<>
     struct action<breakInst> {
         static void apply(const input &in, Program &p) {
+            assert(operands.empty());
+            funcScope->instructions.push_back(new BreakInst());
+            operands.clear();
         }
     };
 
     template<>
     struct action<arrayToVarInst> {
         static void apply(const input &in, Program &p) {
-//            assert(operands.size() >= 7);
-//            std::string lv = operands[4], rv = operands[5];
-//            operands.erase(operands.begin(), operands.begin() + 6);
-//            p.functions.back()->instructions.push_back(new AssignInst(lv, rv, operands));
-//            operands.clear();
+            assert(operands.size() >= 7);
+            std::string lv = operands[4], rv = operands[5];
+            operands.erase(operands.begin(), operands.begin() + 6);
+            funcScope->instructions.push_back(new AssignInst(lv, rv, operands));
+            operands.clear();
         }
     };
 
     template<>
     struct action<varToArrayInst> {
         static void apply(const input &in, Program &p) {
-//            assert(operands.size() >= 8);
-//            std::string var = operands[5], s = operands.back();
-//            operands.erase(operands.begin(), operands.begin() + 6);
-//            operands.pop_back();
-//            p.functions.back()->instructions.push_back(new AssignInst(var, operands, s));
-//            operands.clear();
+            assert(operands.size() >= 8);
+            std::string var = operands[5], s = operands.back();
+            operands.erase(operands.begin(), operands.begin() + 6);
+            operands.pop_back();
+            funcScope->instructions.push_back(new AssignInst(var, operands, s));
+            operands.clear();
         }
     };
 
     template<>
     struct action<assignLengthInst> {
         static void apply(const input &in, Program &p) {
-//            p.functions.back()->instructions.push_back(new AssignLengthInst(operands[operands.size() - 3], operands[operands.size() - 2],
-//                                                        operands.back()));
-//            operands.clear();
+            assert(operands.size() == 6);
+            funcScope->instructions.push_back(new AssignLengthInst(operands[operands.size() - 3],
+                                                                   operands[operands.size() - 2], operands.back()));
+            operands.clear();
         }
     };
 
     template<>
     struct action<callInst> {
         static void apply(const input &in, Program &p) {
-//            assert(operands.size() >= 1);
-//            std::string callee = operands[0];
-//            operands.erase(operands.begin());
-//            p.functions.back()->instructions.push_back(new AssignCallInst(callee, operands));
-//            operands.clear();
+            assert(operands.size() >= 1);
+            std::string callee = operands[0];
+            operands.erase(operands.begin());
+            funcScope->instructions.push_back(new AssignCallInst("", callee, operands));
+            operands.clear();
         }
     };
 
     template<>
     struct action<assignCallInst> {
         static void apply(const input &in, Program &p) {
-//            assert(operands.size() >= 4);
-//            std::string var = operands[2], callee = operands[3];
-//            operands.erase(operands.begin(), operands.begin() + 4);
-//            p.functions.back()->instructions.push_back(new AssignCallInst(var, callee, operands));
-//            operands.clear();
+            assert(operands.size() >= 4);
+            std::string var = operands[2], callee = operands[3];
+            operands.erase(operands.begin(), operands.begin() + 4);
+            funcScope->instructions.push_back(new AssignCallInst(var, callee, operands));
+            operands.clear();
         }
     };
 
     template<>
     struct action<newArrayInst> {
         static void apply(const input &in, Program &p) {
-//            assert(operands.size() >= 3);
-//            std::string var = operands[1];
-//            operands.erase(operands.begin(), operands.begin() + 2);
-//            p.functions.back()->instructions.push_back(new NewArrayInst(var, operands));
-//            operands.clear();
+            assert(operands.size() >= 3);
+            std::string var = operands[1];
+            operands.erase(operands.begin(), operands.begin() + 2);
+            funcScope->instructions.push_back(new NewArrayInst(var, operands));
+            operands.clear();
         }
     };
 
     template<>
     struct action<newTupleInst> {
         static void apply(const input &in, Program &p) {
-//            p.functions.back()->instructions.push_back(new NewTupleInst(operands[operands.size() - 2], operands.back()));
-//            operands.clear();
+            funcScope->instructions.push_back(new NewTupleInst(operands[operands.size() - 2], operands.back()));
+            operands.clear();
         }
     };
 
@@ -340,7 +391,9 @@ namespace LB {
     template<>
     struct action<inst> {
         static void apply(const input &in, Program &p) {
-//            cout << ++n << "\t" << *p.functions.back()->instructions.back() << endl;
+            if (dynamic_cast<Scope *>(funcScope->instructions.back()) == NULL) {
+                cout << ++n << "\t" << *funcScope->instructions.back() << endl;
+            }
         }
     };
 #endif
