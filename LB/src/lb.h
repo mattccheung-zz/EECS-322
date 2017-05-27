@@ -12,6 +12,9 @@ using namespace std;
 
 
 namespace LB {
+    struct Scope;
+
+
     enum OP {
         NOP, ADDQ, SUBQ, IMULQ, ANDQ, SALQ, SARQ, LT, LE, EQ, GE, GT
     };
@@ -77,6 +80,8 @@ namespace LB {
         virtual ~Instruction() {};
 
         virtual void print(ostream &os) = 0;
+
+        virtual Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap) = 0;
     };
 
     ostream &operator<<(ostream &os, Instruction &inst);
@@ -90,6 +95,8 @@ namespace LB {
         ~TypeInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct AssignInst : Instruction {
@@ -105,6 +112,8 @@ namespace LB {
         ~AssignInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct AssignCondInst : Instruction {
@@ -116,6 +125,8 @@ namespace LB {
         ~AssignCondInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct LabelInst : Instruction {
@@ -126,6 +137,8 @@ namespace LB {
         ~LabelInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct IfInst : Instruction {
@@ -137,6 +150,8 @@ namespace LB {
         ~IfInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct ReturnInst : Instruction {
@@ -147,6 +162,8 @@ namespace LB {
         ~ReturnInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct WhileInst : Instruction {
@@ -158,18 +175,24 @@ namespace LB {
         ~WhileInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct ContinueInst : Instruction {
         ~ContinueInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct BreakInst : Instruction {
         ~BreakInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct AssignLengthInst : Instruction {
@@ -180,6 +203,8 @@ namespace LB {
         ~AssignLengthInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct AssignCallInst : Instruction {
@@ -191,6 +216,8 @@ namespace LB {
         ~AssignCallInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct NewArrayInst : Instruction {
@@ -202,6 +229,8 @@ namespace LB {
         ~NewArrayInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct NewTupleInst : Instruction {
@@ -212,9 +241,10 @@ namespace LB {
         ~NewTupleInst() {};
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
-    struct Scope;
     struct Scope : Instruction {
         vector<Instruction *> instructions;
         Scope *parent;
@@ -222,6 +252,8 @@ namespace LB {
         ~Scope();
 
         void print(ostream &os);
+
+        Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
     };
 
     struct Function {
