@@ -33,7 +33,7 @@ namespace L3 {
     struct wseps : sor<ascii::space, cmt> {};
 
     struct op : sor<one<'+'>, one<'-'>, one<'*'>, one<'&'>, string<'<', '<'>, string<'>', '>'>> {};
-    struct cmp : sor<one<'<'>, string<'<', '='>, one<'='>, string<'>', '='>, one<'>'>> {};
+    struct cmp : sor<string<'<', '='>, one<'<'>, one<'='>, string<'>', '='>, one<'>'>> {};
     struct v : seq<plus<sor<alpha, one<'_'>>>, star<sor<alpha, one<'_'>, digit>>> {};
     struct lb : seq<one<':'>, v> {};
     struct label : lb {};
