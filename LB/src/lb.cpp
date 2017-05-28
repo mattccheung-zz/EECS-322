@@ -456,7 +456,7 @@ namespace LB {
                 las.push_back(new LA::AssignOpInst(flag, ifInst->lt, ifInst->rt, opToString(ifInst->op)));
                 las.push_back(new LA::BranchInst(flag, ifInst->lb, ifInst->rb));
             } else if (LabelInst *labelInst = dynamic_cast<LabelInst *>(inst)) {
-                if (beginToWhile.count(labelInst->lb) > 0) {
+                if (beginToWhile.count(labelInst->lb) > 0 && loopStack.top() != beginToWhile.at(labelInst->lb)) {
                     loopStack.push(beginToWhile.at(labelInst->lb));
                 } else if (EndToWhile.count(labelInst->lb) > 0) {
                     loopStack.pop();
