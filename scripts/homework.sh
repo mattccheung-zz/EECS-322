@@ -19,6 +19,7 @@ rm -fr */obj ;
 rm -fr */bin ;
 rm -r */scripts ;
 rm  */Makefile ;
+rm -f `find ./ -iname *.swp`
 for i in `ls` ; do
   if ! test -d $i ; then
     continue ;
@@ -35,8 +36,7 @@ for i in `ls` ; do
 done
 
 # Create the package
+tar cfj ../${dirName}.tar.bz2 ./ ;
 cd ../ ;
-rm -f ${dirName}.tar.bz2 ;
-tar cfj ${dirName}.tar.bz2 ${dirName} ;
 mv ${dirName}.tar.bz2 "${origDir}"/ ;
 rm -r ${dirName} ;
