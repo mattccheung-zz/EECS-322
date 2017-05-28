@@ -6,6 +6,7 @@
 
 #include "lb.h"
 #include "parser.h"
+#include "la.h"
 
 
 using namespace LB;
@@ -34,6 +35,8 @@ int main(int argc, char **argv) {
     ofstream output;
     output.open("prog.a");
     Program p = ParseFile(argv[optind]);
+    LA::Program pla = p.getLA();
+    output << pla << endl;
     output.close();
     return 0;
 }

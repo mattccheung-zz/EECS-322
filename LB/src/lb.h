@@ -7,6 +7,8 @@
 #include <map>
 #include <utility>
 
+#include "la.h"
+
 
 using namespace std;
 
@@ -73,7 +75,7 @@ namespace LB {
 
         Type(const string &s);
 
-        string toString();
+        string toString() const;
     };
 
     struct Instruction {
@@ -82,6 +84,8 @@ namespace LB {
         virtual void print(ostream &os) = 0;
 
         virtual Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap) = 0;
+
+        virtual vector<LA::Instruction *> getLA() = 0;
     };
 
     ostream &operator<<(ostream &os, Instruction &inst);
@@ -97,6 +101,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct AssignInst : Instruction {
@@ -114,6 +120,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct AssignCondInst : Instruction {
@@ -127,6 +135,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct LabelInst : Instruction {
@@ -139,6 +149,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct IfInst : Instruction {
@@ -152,6 +164,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct ReturnInst : Instruction {
@@ -164,6 +178,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct WhileInst : Instruction {
@@ -177,6 +193,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct ContinueInst : Instruction {
@@ -185,6 +203,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct BreakInst : Instruction {
@@ -193,6 +213,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct AssignLengthInst : Instruction {
@@ -205,6 +227,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct AssignCallInst : Instruction {
@@ -218,6 +242,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct NewArrayInst : Instruction {
@@ -231,6 +257,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct NewTupleInst : Instruction {
@@ -243,6 +271,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct Scope : Instruction {
@@ -254,6 +284,8 @@ namespace LB {
         void print(ostream &os);
 
         Instruction *getInstWithNewVar(Scope *scope, map<Scope *, map<string, string>> &varMap);
+
+        vector<LA::Instruction *> getLA();
     };
 
     struct Function {
@@ -263,6 +295,8 @@ namespace LB {
         Scope *scope;
 
         ~Function();
+
+        LA::Function *getLA();
     };
 
     struct Program {
@@ -270,6 +304,8 @@ namespace LB {
         vector<Function *> functions;
 
         ~Program();
+
+        LA::Program getLA();
     };
 }
 
